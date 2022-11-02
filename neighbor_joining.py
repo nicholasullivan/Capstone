@@ -99,7 +99,8 @@ def expected_val(sequences,sequence_length,taxon_labels):
 	probs = {
 		letter: totals[letter] / (sequence_length*len(taxon_labels)) for letter in alphabet
 	}
-	return(probs)
+	
+	return(probs,alphabet)
 
 #get columns
 def get_cols(sequences,sequence_length):
@@ -116,7 +117,7 @@ def get_cols(sequences,sequence_length):
 def col_probs(cols_list,taxon_labels):
 	x=0
 	prob_list = []
-	while x < 168:
+	while x < len(cols_list):
 		for i in range(len(cols_list)):
 			if i == x:
 				totals = Counter(cols_list[i])
@@ -140,16 +141,27 @@ sequences, sequence_length, taxon_labels, msa = read_phylip("C:/Users/keerp/Down
 
 
 #TESTING EXPECTED VALUE FOR WHOLE SET
-exp_probs = expected_val(sequences,sequence_length,taxon_labels)
-print(exp_probs)
+exp_probs,alphabet = expected_val(sequences,sequence_length,taxon_labels)
+#print(exp_probs)
 
 
 cols_list = get_cols(sequences,sequence_length)
 
 df = col_probs(cols_list,taxon_labels)
-print(df)
+#print(df)
 
+#getting transition matrix
+sequences1 = sequences[0]
+prob_matrix = {}
+for i in alphabet:
+    prob_matrix[i] = {}
+    for j in alphabet:
+        prob_matrix[i][j] = 0.0
+		
+for i, j in zip(sequences1[:-1], sequences1[1:]):
+	prob_matrix[i][j] += 1
 
+print(prob_matrix)
 
 
 #Needs replacement
