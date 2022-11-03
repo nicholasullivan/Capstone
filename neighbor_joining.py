@@ -3,6 +3,7 @@ import os
 import warnings
 from collections import Counter
 import pandas as pd
+import math
 
 warnings.simplefilter("ignore", DeprecationWarning)
 warnings.simplefilter("ignore", RuntimeWarning)
@@ -95,7 +96,27 @@ def expected_val(sequences,sequence_length,taxon_labels):
 		
 	for item in totals:
 		alphabet.append(item)
+	#alphabet=sorted(alphabet)
+	#alphabet=alphabet[1::]
+	probs = {
+		letter: totals[letter] / (sequence_length*len(taxon_labels)) for letter in alphabet
+	}
+	
+	return(probs,alphabet)
 
+def expected_val_ND(sequences,sequence_length,taxon_labels):
+	alphabet = []
+
+	for i in range(len(sequences)):
+		if i == 0:
+			totals = Counter(sequences[i])
+		else:
+			totals.update(Counter(sequences[i]))
+		
+	for item in totals:
+		alphabet.append(item)
+	alphabet=sorted(alphabet)
+	alphabet=alphabet[1::]
 	probs = {
 		letter: totals[letter] / (sequence_length*len(taxon_labels)) for letter in alphabet
 	}
@@ -127,7 +148,7 @@ def col_probs(cols_list,taxon_labels):
 			alphabet.append(item)
 
 		probs = {
-			letter: totals[letter] / len(taxon_labels) for letter in alphabet
+			letter: totals[letter] / len(taxon_labels) for letter in sorted(alphabet)
 		}
 		x+=1
 		prob_list.append(probs)
@@ -135,33 +156,46 @@ def col_probs(cols_list,taxon_labels):
 	df = pd.DataFrame.from_dict(prob_list).fillna(0)
 	return(df)
 
-
 # Read in the multiple sequence alignment
-sequences, sequence_length, taxon_labels, msa = read_phylip("C:/Users/keerp/Downloads/real_test2.phy")
+sequences, sequence_length, taxon_labels, msa = read_phylip("C:\\Users\\nikol\\Downloads\\real_test2.phy")
 
 
 #TESTING EXPECTED VALUE FOR WHOLE SET
 exp_probs,alphabet = expected_val(sequences,sequence_length,taxon_labels)
-#print(exp_probs)
 
+
+exp_probs_ND,alphabet2 = expected_val_ND(sequences,sequence_length,taxon_labels)
+
+
+#A=exp_probs.get("A")
+#print(A)
+print(exp_probs)
+#dataMatrix = numpy.array([exp_probs[i] for i in sorted(alphabet)])
+
+#print (dataMatrix)
 
 cols_list = get_cols(sequences,sequence_length)
 
 df = col_probs(cols_list,taxon_labels)
-#print(df)
-
+print(df)
+print(df.iloc[0,1])
 #getting transition matrix
 sequences1 = sequences[0]
 prob_matrix = {}
-for i in alphabet:
+for i in sorted(alphabet):
     prob_matrix[i] = {}
-    for j in alphabet:
+    for j in sorted(alphabet):
         prob_matrix[i][j] = 0.0
 		
 for i, j in zip(sequences1[:-1], sequences1[1:]):
 	prob_matrix[i][j] += 1
 
-print(prob_matrix)
+transMatrix=pd.DataFrame(prob_matrix)
+print(transMatrix)
+#print(prob_matrix)
+#dataMatrix = numpy.array([prob_matrix[i] for i in sorted(alphabet)])
+#print(dataMatrix)
+
 
 
 #Needs replacement
@@ -172,7 +206,33 @@ matrix_length = n_taxa
 p_distance_matrix = numpy.zeros((matrix_length, matrix_length))
 
 
-
+def col_Score_Mat(cols_list, exp_probs_ND):
+	for n in range(0,len(cols_list.index)):
+		for f in range(0,20) :
+			fOb=cols_list.iloc[n,f]
+			countFOB=168*fOb
+			fEx=list(exp_prob_ND.values())[f]
+			countFEX=fEx*168*137
+			for s in range(0,20):
+				sOb=cols_list.iloc[n,s]
+				countSOB=168*sOb
+				sEx=list(exp_prob_ND.values())[s]
+				countSEX=sEx*168*137
+				if f==s :
+					if countFOB==1 :
+						countFOB=countFOB+1
+					
+					#print(count)
+					ob=(((countFOB-1)^2+(countFOB-1))/2)/((167^2+167)/2) #pair observed frequency
+					ex=(((countFEX-1)^2+(countFEX-1))/2)/(((167*137)^2+(167*137))/2)
+					#print(ob)
+					score=math.log((ob/ex^2),2)
+				
+				else:
+					ob=(countFOB*countSOB)/((167^2+167)/2) #pair observed frequency
+					#print(ob)
+					score=math.log(ob/(countFEX*countSEX*2),2)
+				
 
 #TODO:
 #REPLACE DISTANCE FUNCTION WITH THE ONE FROM THE PAPER
