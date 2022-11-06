@@ -4,6 +4,7 @@ import warnings
 from collections import Counter
 import pandas as pd
 import math
+import numpy as np
 
 warnings.simplefilter("ignore", DeprecationWarning)
 warnings.simplefilter("ignore", RuntimeWarning)
@@ -156,17 +157,30 @@ def col_probs(cols_list,taxon_labels):
 	df = pd.DataFrame.from_dict(prob_list).fillna(0)
 	return(df)
 
+def matrix(file): #file for reading txt file with matrix
+	contents = open(file).read()
+	return [item.split() for item in contents.split('\n')[:-1]]
+				
 # Read in the multiple sequence alignment
-sequences, sequence_length, taxon_labels, msa = read_phylip("C:\\Users\\nikol\\Downloads\\real_test2.phy")
+sequences, sequence_length, taxon_labels, msa = read_phylip("C:\\Users\\keerp\\Downloads\\real_test2.phy")
 
 
 #TESTING EXPECTED VALUE FOR WHOLE SET
 exp_probs,alphabet = expected_val(sequences,sequence_length,taxon_labels)
 
-
 exp_probs_ND,alphabet2 = expected_val_ND(sequences,sequence_length,taxon_labels)
 
+#TESTING IMPORTED MATRICES
 
+BLOS40  = 'C:\\Users\\keerp\\Documents\\Data Science Practicum\\BLOSUM40.txt' #matrix path
+PAM500 = 'C:\\Users\\keerp\\Documents\\Data Science Practicum\\PAM500.txt'
+
+
+BLOS40mat = matrix(BLOS40)
+print(BLOS40mat, 'BLOSUM40') #currently the Blosum40 matrix 
+
+PAM500mat = matrix(PAM500)
+print(PAM500mat, 'PAM500')
 #A=exp_probs.get("A")
 #print(A)
 print(exp_probs)
@@ -179,6 +193,7 @@ cols_list = get_cols(sequences,sequence_length)
 df = col_probs(cols_list,taxon_labels)
 print(df)
 print(df.iloc[0,1])
+
 #getting transition matrix
 sequences1 = sequences[0]
 prob_matrix = {}
@@ -206,33 +221,7 @@ matrix_length = n_taxa
 p_distance_matrix = numpy.zeros((matrix_length, matrix_length))
 
 
-def col_Score_Mat(cols_list, exp_probs_ND):
-	for n in range(0,len(cols_list.index)):
-		for f in range(0,20) :
-			fOb=cols_list.iloc[n,f]
-			countFOB=168*fOb
-			fEx=list(exp_prob_ND.values())[f]
-			countFEX=fEx*168*137
-			for s in range(0,20):
-				sOb=cols_list.iloc[n,s]
-				countSOB=168*sOb
-				sEx=list(exp_prob_ND.values())[s]
-				countSEX=sEx*168*137
-				if f==s :
-					if countFOB==1 :
-						countFOB=countFOB+1
-					
-					#print(count)
-					ob=(((countFOB-1)^2+(countFOB-1))/2)/((167^2+167)/2) #pair observed frequency
-					ex=(((countFEX-1)^2+(countFEX-1))/2)/(((167*137)^2+(167*137))/2)
-					#print(ob)
-					score=math.log((ob/ex^2),2)
-				
-				else:
-					ob=(countFOB*countSOB)/((167^2+167)/2) #pair observed frequency
-					#print(ob)
-					score=math.log(ob/(countFEX*countSEX*2),2)
-				
+
 
 #TODO:
 #REPLACE DISTANCE FUNCTION WITH THE ONE FROM THE PAPER
@@ -311,4 +300,3 @@ write_tree(output_path, tree, taxon_labels)
 #TO DO:
 #Figure out code (HOW TO ADD OUR OWN SCORING MATRICES???)
 #FIND BOOTSTRAPPING!
-
