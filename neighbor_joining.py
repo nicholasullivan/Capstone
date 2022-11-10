@@ -156,9 +156,6 @@ def col_probs(cols_list,taxon_labels):
 	df = pd.DataFrame.from_dict(prob_list).fillna(0)
 	return(df)
 
-def matrix(file): #file for reading txt file with matrix
-	contents = open(file).read()
-	return [item.split() for item in contents.split('\n')[:-1]]
 				
 # Read in the multiple sequence alignment
 sequences, sequence_length, taxon_labels, msa = read_phylip("C:\\Users\\keerp\\Downloads\\real_test2.phy")
@@ -169,8 +166,6 @@ exp_probs,alphabet = expected_val(sequences,sequence_length,taxon_labels)
 
 exp_probs_ND,alphabet2 = expected_val_ND(sequences,sequence_length,taxon_labels)
 
-#OMIT?
-#print(exp_probs)
 
 
 cols_list = get_cols(sequences,sequence_length)
@@ -179,33 +174,24 @@ df = col_probs(cols_list,taxon_labels)
 #print(df)
 #print(df.iloc[0,1])
 
-#getting transition matrix OMIT?
-sequences1 = sequences[0]
-prob_matrix = {}
-for i in sorted(alphabet):
-    prob_matrix[i] = {}
-    for j in sorted(alphabet):
-        prob_matrix[i][j] = 0.0
-		
-for i, j in zip(sequences1[:-1], sequences1[1:]):
-	prob_matrix[i][j] += 1
-
-transMatrix=pd.DataFrame(prob_matrix)
-#print(transMatrix)
-#print(prob_matrix)
-#dataMatrix = numpy.array([prob_matrix[i] for i in sorted(alphabet)])
-#print(dataMatrix)
 
 #TODO:
 #REPLACE DISTANCE FUNCTION WITH THE ONE FROM THE PAPER
 #find each pair combo, find that score in Score matrix (BLOSUM, whatev), then put that score in a list, sum the scores for those two, then do it for each sequence combo
 #resulting in a matrix of scores between each sequence
 
-arr = pd.read_csv('C:\\Users\\keerp\\Documents\\Data Science Practicum\\BLOSUM30.csv', header=None).values #importing BLOSUM 30 (need to clean this)
-labs = 'ARNDCQEGHILKMFPSTWYVBZX-'
-labels = numpy.fromstring(labs, dtype = "uint8")
+input = input('Score Matrix?: ')
+print(input)
+if input == '1':
+	arr = pd.read_csv('C:\\Users\\keerp\\Documents\\Data Science Practicum\\BLOSUM30.csv', header=None).values #importing BLOSUM 30 (need to clean this)
+if input == '2':
+	arr = pd.read_csv('C:\\Users\\keerp\\Documents\\Data Science Practicum\\PAM500.csv', header=None).values
+if input == '3':
+	arr = pd.read_csv('C:\\Users\\keerp\\Documents\\Data Science Practicum\\BLOSUM62.csv', header=None).values
 
-df = pd.DataFrame(arr,columns=labels,index= labels)
+labs = 'ARNDCQEGHILKMFPSTWYVBZX-'
+labels = numpy.fromstring(labs, dtype = "uint8") 
+df = pd.DataFrame(arr,columns=labels,index= labels) #make scoring dataframe
 print(df)
 
 #make distance matrix of zeros
@@ -213,31 +199,34 @@ n_taxa = len(taxon_labels)
 n_nodes = n_taxa + n_taxa - 2
 
 matrix_length = n_taxa
-p_distance_matrix = numpy.zeros((matrix_length, sequence_length))
+p_distance_matrix = numpy.zeros((matrix_length, matrix_length))
 
 #calculating sigma(s1,s2) for every row and replacing with score
 
+seq = 0
+counter = 0
+while seq < (n_taxa-1):
+	if counter == n_taxa:
+		seq += 1
+		print(seq)
+		counter = 0
 
-for i in range(n_taxa-1):
-		for j in range(sequence_length):
-			msa_1 = msa[i][j]#first residue
-			msa_2 = msa[i+1][j]#second reside
-			comp = df[msa_1][msa_2] #find in score mat
-			p_distance_matrix[i][j] = comp #that score is spot in new_mat
-print(p_distance_matrix.shape)
+	for j in range(sequence_length):
+		msa_1 = msa[seq][j]#first residue
+		msa_2 = msa[counter][j]#second reside
+		comp = df[msa_1][msa_2] #find in score mat
+		p_distance_matrix[seq][counter] += comp #that score is spot in new_mat
+		
+	counter += 1
+
 print(p_distance_matrix)
+print(p_distance_matrix[0])
+print(p_distance_matrix[1])
 
-d_distance_matrix = numpy.zeros((matrix_length, matrix_length)) #create distance matrix n*n
 
-for i in range(n_taxa):
-	for j in range(n_taxa):
-		d_distance_matrix[i][j] = sum(p_distance_matrix[i]) #sum of scores = 1 spot in this matrix
-print(d_distance_matrix.shape)
-print(d_distance_matrix)
 
 
 #Current Bugs
-#should not all be same value in p_distance_matrix
 #could smooth out matrix read-in
 
 
