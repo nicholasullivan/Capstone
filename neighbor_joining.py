@@ -153,7 +153,6 @@ def col_probs(cols_list,taxon_labels):
 		}
 		x+=1
 		prob_list.append(probs)
-	#print(prob_list)
 	df = pd.DataFrame.from_dict(prob_list).fillna(0)
 	return(df)
 
@@ -170,31 +169,17 @@ exp_probs,alphabet = expected_val(sequences,sequence_length,taxon_labels)
 
 exp_probs_ND,alphabet2 = expected_val_ND(sequences,sequence_length,taxon_labels)
 
-#TESTING IMPORTED MATRICES
+#OMIT?
+#print(exp_probs)
 
-BLOS40  = 'C:\\Users\\keerp\\Documents\\Data Science Practicum\\BLOSUM40.txt' #matrix path
-PAM500 = 'C:\\Users\\keerp\\Documents\\Data Science Practicum\\PAM500.txt'
-
-
-BLOS40mat = matrix(BLOS40)
-print(BLOS40mat, 'BLOSUM40') #currently the Blosum40 matrix 
-
-PAM500mat = matrix(PAM500)
-print(PAM500mat, 'PAM500')
-#A=exp_probs.get("A")
-#print(A)
-print(exp_probs)
-#dataMatrix = numpy.array([exp_probs[i] for i in sorted(alphabet)])
-
-#print (dataMatrix)
 
 cols_list = get_cols(sequences,sequence_length)
 
 df = col_probs(cols_list,taxon_labels)
-print(df)
-print(df.iloc[0,1])
+#print(df)
+#print(df.iloc[0,1])
 
-#getting transition matrix
+#getting transition matrix OMIT?
 sequences1 = sequences[0]
 prob_matrix = {}
 for i in sorted(alphabet):
@@ -206,32 +191,66 @@ for i, j in zip(sequences1[:-1], sequences1[1:]):
 	prob_matrix[i][j] += 1
 
 transMatrix=pd.DataFrame(prob_matrix)
-print(transMatrix)
+#print(transMatrix)
 #print(prob_matrix)
 #dataMatrix = numpy.array([prob_matrix[i] for i in sorted(alphabet)])
 #print(dataMatrix)
 
+#TODO:
+#REPLACE DISTANCE FUNCTION WITH THE ONE FROM THE PAPER
+#find each pair combo, find that score in Score matrix (BLOSUM, whatev), then put that score in a list, sum the scores for those two, then do it for each sequence combo
+#resulting in a matrix of scores between each sequence
 
+arr = pd.read_csv('C:\\Users\\keerp\\Documents\\Data Science Practicum\\BLOSUM30.csv', header=None).values #importing BLOSUM 30 (need to clean this)
+labs = 'ARNDCQEGHILKMFPSTWYVBZX-'
+labels = numpy.fromstring(labs, dtype = "uint8")
 
-#Needs replacement
+df = pd.DataFrame(arr,columns=labels,index= labels)
+print(df)
+
+#make distance matrix of zeros
 n_taxa = len(taxon_labels)
 n_nodes = n_taxa + n_taxa - 2
 
 matrix_length = n_taxa
-p_distance_matrix = numpy.zeros((matrix_length, matrix_length))
+p_distance_matrix = numpy.zeros((matrix_length, sequence_length))
+
+#calculating sigma(s1,s2) for every row and replacing with score
+
+
+for i in range(n_taxa-1):
+		for j in range(sequence_length):
+			msa_1 = msa[i][j]#first residue
+			msa_2 = msa[i+1][j]#second reside
+			comp = df[msa_1][msa_2] #find in score mat
+			p_distance_matrix[i][j] = comp #that score is spot in new_mat
+print(p_distance_matrix.shape)
+print(p_distance_matrix)
+
+d_distance_matrix = numpy.zeros((matrix_length, matrix_length)) #create distance matrix n*n
+
+for i in range(n_taxa):
+	for j in range(n_taxa):
+		d_distance_matrix[i][j] = sum(p_distance_matrix[i]) #sum of scores = 1 spot in this matrix
+print(d_distance_matrix.shape)
+print(d_distance_matrix)
+
+
+#Current Bugs
+#should not all be same value in p_distance_matrix
+#could smooth out matrix read-in
 
 
 
 
-#TODO:
-#REPLACE DISTANCE FUNCTION WITH THE ONE FROM THE PAPER
-
+#to be replaced
 for i in range(n_taxa): 
 	msa_i = msa[i]
 	for j in range(n_taxa):
-		msa_j = msa[j]
+		msa_j = msa[i]
 		identity = float(numpy.sum(msa_i == msa_j))
 		p_distance_matrix[i][j] = 1.0 - identity / sequence_length
+#print(p_distance_matrix)
 
 matrix_map = [n for n in range(n_taxa)] # mapping matrix rows and columns to node indices
 distance_matrix = -0.75 * numpy.log(1.0 - 1.3333333333 * p_distance_matrix) # using the Jukes-Cantor 1969 (JC69) model
@@ -293,10 +312,3 @@ for u in range(n_taxa, n_nodes): # we call internal nodes "u"
 # save the result
 output_path = "C:/Users/keerp/Downloads/nj.tree" 
 write_tree(output_path, tree, taxon_labels)
-
-
-
-
-#TO DO:
-#Figure out code (HOW TO ADD OUR OWN SCORING MATRICES???)
-#FIND BOOTSTRAPPING!
