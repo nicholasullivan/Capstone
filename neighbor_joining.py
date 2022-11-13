@@ -156,6 +156,65 @@ def col_probs(cols_list,taxon_labels):
 	df = pd.DataFrame.from_dict(prob_list).fillna(0)
 	return(df)
 
+def realdist(n_taxa,msa): #calculating sigma(s1,s2) for every row and replacing with score
+	#make distance matrix of zeros
+	matrix_length = n_taxa
+	distance_matrix = numpy.zeros((matrix_length, matrix_length))
+	seq = 0
+	counter = 0
+	while seq < (n_taxa-1):
+		if counter == n_taxa:
+			seq += 1
+			print(seq)
+			counter = 0
+
+		for j in range(sequence_length):
+			msa_1 = msa[seq][j]#first residue
+			msa_2 = msa[counter][j]#second reside
+			if (msa_1 == '-' and msa_2 == '-'): #two gaps calculate nothing
+				continue
+			else:
+				comp = df[msa_1][msa_2] #find in score mat
+				distance_matrix[seq][counter] += comp #that score is spot in new_mat
+			
+		counter += 1
+	return distance_matrix
+
+def randdist(n_taxa,msa,sequence_length):
+	matrix_length = n_taxa
+	distance_matrix = numpy.zeros((matrix_length, matrix_length))
+	seq = 0
+	counter = 0
+	while seq < (n_taxa-1):
+		comb_list = []
+		if counter == n_taxa:
+			seq += 1
+			print(seq)
+			counter = 0
+
+		for j in range(sequence_length):
+			msa_1 = msa[seq][j]#first residue
+			msa_2 = msa[counter][j]#second reside
+			if (msa_1 == '-' and msa_2 == '-'): #two gaps calculate nothing
+				continue
+			else:
+				if (msa_1,msa_2) in comb_list: #combo already found, dont add it
+					continue
+				else:
+					comb_list.append((msa_1,msa_2)) #add to combo list found in two seq
+		
+		for val in comb_list:
+			comb_score = df[val[0]][val[1]] #find in score mat
+			num1_occ = np.count_nonzero(msa[seq]==val[0]) #count num occ of first val (in first seq)
+			num2_occ = np.count_nonzero(msa[counter]==val[1]) #count num occ of sec val (in sec seq)
+			gap_count1 = np.count_nonzero(msa[seq]==45) #get num of gaps seq 1
+			#gap_count2 = np.count_nonzero(msa[counter]==45) #get num of gaps seq 2
+			rand_score = ((comb_score*num1_occ*num2_occ))/sequence_length - (gap_count1*-2)
+			distance_matrix[seq][counter] += rand_score #that score is spot in new_mat
+			
+		counter += 1
+	return distance_matrix
+
 				
 # Read in the multiple sequence alignment
 sequences, sequence_length, taxon_labels, msa = read_phylip("C:\\Users\\keerp\\Downloads\\real_test2.phy")
@@ -189,49 +248,35 @@ if input == '2':
 if input == '3':
 	arr = pd.read_csv('C:\\Users\\keerp\\Documents\\Data Science Practicum\\BLOSUM62.csv', header=None).values
 
-labs = 'ARNDCQEGHILKMFPSTWYVBZX-'
+print(arr)
+labs = 'ARNDCQEGHILKMFPSTWYV-'
 labels = numpy.fromstring(labs, dtype = "uint8") 
 df = pd.DataFrame(arr,columns=labels,index= labels) #make scoring dataframe
 print(df)
 
-#make distance matrix of zeros
+
 n_taxa = len(taxon_labels)
 n_nodes = n_taxa + n_taxa - 2
-
 matrix_length = n_taxa
-p_distance_matrix = numpy.zeros((matrix_length, matrix_length))
-
-#calculating sigma(s1,s2) for every row and replacing with score
-
-seq = 0
-counter = 0
-while seq < (n_taxa-1):
-	if counter == n_taxa:
-		seq += 1
-		print(seq)
-		counter = 0
-
-	for j in range(sequence_length):
-		msa_1 = msa[seq][j]#first residue
-		msa_2 = msa[counter][j]#second reside
-		comp = df[msa_1][msa_2] #find in score mat
-		p_distance_matrix[seq][counter] += comp #that score is spot in new_mat
-		
-	counter += 1
-
-print(p_distance_matrix)
-print(p_distance_matrix[0])
-print(p_distance_matrix[1])
+real_distance_matrix = realdist(n_taxa,msa)
 
 
 
+print(real_distance_matrix)
+print(real_distance_matrix[0])
+print(real_distance_matrix[1])
 
-#Current Bugs
-#could smooth out matrix read-in
+#random calculation equation
+#(1/length) sum((each possible residue type)*number of the that residue in i * number of that residue in j))
+#  - number of gaps *penalty #random ij or sigma r
 
 
+rand_dist_matrix = randdist(n_taxa,msa,sequence_length)
+print(rand_dist_matrix)
+print(rand_dist_matrix[0])
+print(rand_dist_matrix[1])
 
-
+p_distance_matrix=rand_dist_matrix #temporary to prevent further errors of stuff we havent changed
 #to be replaced
 for i in range(n_taxa): 
 	msa_i = msa[i]
