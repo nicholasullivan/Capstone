@@ -220,9 +220,9 @@ def upper_limits(n_taxa, msa, sequence_length):
 	scores = realdist(n_taxa, msa)
 	matrix = numpy.zeros((n_taxa, n_taxa))
 	i = 0
-	while i < n_taxa:
+	while i < (n_taxa-1):
 		j = 0
-		while j < sequence_length:
+		while j < (sequence_length-1):
 			matrix[i, j] = (scores[i,i] + scores[j,j]) / 2
 			j = j + 1
 		i = i + 1
@@ -273,48 +273,54 @@ if input == '3':
 	arr = pd.read_csv('BLOSUM62.csv', header=None).values
 
 print(arr)
+with_pen = np.empty([21,21])
+for i in range(len(arr)):	
+	with_pen[i] = np.append(arr[i], [-2])
+with_pen[20] = np.append(np.repeat(-2.0, 20), 0.0)
+print(with_pen)
+
 labs = 'ARNDCQEGHILKMFPSTWYV-'
 labels = numpy.fromstring(labs, dtype = "uint8") 
-df = pd.DataFrame(arr,columns=labels,index= labels) #make scoring dataframe
+df = pd.DataFrame(with_pen,columns=labels,index= labels) #make scoring dataframe
 print(df)
 
 
 n_taxa = len(taxon_labels)
 n_nodes = n_taxa + n_taxa - 2
-matrix_length = n_taxa
-real_distance_matrix = realdist(n_taxa,msa)
+#matrix_length = n_taxa
+distance_matrix = dist_mat(n_taxa, msa, sequence_length)
+print(distance_matrix)
 
+# real_distance_matrix = realdist(n_taxa,msa)
 
+# print(real_distance_matrix)
+# print(real_distance_matrix[0])
+# print(real_distance_matrix[1])
 
-print(real_distance_matrix)
-print(real_distance_matrix[0])
-print(real_distance_matrix[1])
+# #random calculation equation
+# #(1/length) sum((each possible residue type)*number of the that residue in i * number of that residue in j))
+# #  - number of gaps *penalty #random ij or sigma r
 
-#random calculation equation
-#(1/length) sum((each possible residue type)*number of the that residue in i * number of that residue in j))
-#  - number of gaps *penalty #random ij or sigma r
+# rand_dist_matrix = randdist(n_taxa,msa,sequence_length)
+# print(rand_dist_matrix)
+# print(rand_dist_matrix[0])
+# print(rand_dist_matrix[1])
 
+# p_distance_matrix=rand_dist_matrix #temporary to prevent further errors of stuff we havent changed
+# #to be replaced
+# for i in range(n_taxa): 
+# 	msa_i = msa[i]
+# 	for j in range(n_taxa):
+# 		msa_j = msa[i]
+# 		identity = float(numpy.sum(msa_i == msa_j))
+# 		p_distance_matrix[i][j] = 1.0 - identity / sequence_length
+# #print(p_distance_matrix)
 
-rand_dist_matrix = randdist(n_taxa,msa,sequence_length)
-print(rand_dist_matrix)
-print(rand_dist_matrix[0])
-print(rand_dist_matrix[1])
+# matrix_map = [n for n in range(n_taxa)] # mapping matrix rows and columns to node indices
+# distance_matrix = -0.75 * numpy.log(1.0 - 1.3333333333 * p_distance_matrix) # using the Jukes-Cantor 1969 (JC69) model
 
-p_distance_matrix=rand_dist_matrix #temporary to prevent further errors of stuff we havent changed
-#to be replaced
-for i in range(n_taxa): 
-	msa_i = msa[i]
-	for j in range(n_taxa):
-		msa_j = msa[i]
-		identity = float(numpy.sum(msa_i == msa_j))
-		p_distance_matrix[i][j] = 1.0 - identity / sequence_length
-#print(p_distance_matrix)
-
-matrix_map = [n for n in range(n_taxa)] # mapping matrix rows and columns to node indices
-distance_matrix = -0.75 * numpy.log(1.0 - 1.3333333333 * p_distance_matrix) # using the Jukes-Cantor 1969 (JC69) model
-
-#print_matrix("P-distance matrix", matrix_map, p_distance_matrix)
-#print_matrix("Distance matrix", matrix_map, distance_matrix)
+# #print_matrix("P-distance matrix", matrix_map, p_distance_matrix)
+# #print_matrix("Distance matrix", matrix_map, distance_matrix)
 
 tree = []
 for i in range(n_nodes):
