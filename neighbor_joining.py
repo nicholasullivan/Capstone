@@ -157,6 +157,7 @@ def col_probs(cols_list,taxon_labels):
 	return(df)
 
 def realdist(n_taxa,msa): #calculating sigma(s1,s2) for every row and replacing with score
+	#why don't we need sequence_length input here?
 	#make distance matrix of zeros
 	matrix_length = n_taxa
 	distance_matrix = numpy.zeros((matrix_length, matrix_length))
@@ -215,9 +216,32 @@ def randdist(n_taxa,msa,sequence_length):
 		counter += 1
 	return distance_matrix
 
-				
+def upper_limits(n_taxa, msa, sequence_length):
+	scores = realdist(n_taxa, msa)
+	matrix = numpy.zeros((n_taxa, n_taxa))
+	i = 0
+	while i < n_taxa:
+		j = 0
+		while j < sequence_length:
+			matrix[i, j] = (scores[i,i] + scores[j,j]) / 2
+			j = j + 1
+		i = i + 1
+	return matrix
+
+def dist_mat(n_taxa,msa,sequence_length):
+	similarities = realdist(n_taxa,msa)
+	randoms = randdist(n_taxa,msa,sequence_length)
+	norm_scores = similarities - randoms
+	upper = upper_limits(n_taxa, msa, sequence_length)
+	upper_norm = upper - randoms
+	raw_dist = -math.log(norm_scores / upper_norm) * 100
+	#c = 
+	#distance_matrix = c * raw_dist
+	return raw_dist
+
+
 # Read in the multiple sequence alignment
-sequences, sequence_length, taxon_labels, msa = read_phylip("C:\\Users\\keerp\\Downloads\\real_test2.phy")
+sequences, sequence_length, taxon_labels, msa = read_phylip("real_test2.phy")
 
 
 #TESTING EXPECTED VALUE FOR WHOLE SET
@@ -242,11 +266,11 @@ df = col_probs(cols_list,taxon_labels)
 input = input('Score Matrix?: ')
 print(input)
 if input == '1':
-	arr = pd.read_csv('C:\\Users\\keerp\\Documents\\Data Science Practicum\\BLOSUM30.csv', header=None).values #importing BLOSUM 30 (need to clean this)
+	arr = pd.read_csv('BLOSUM30.csv', header=None).values #importing BLOSUM 30 (need to clean this)
 if input == '2':
-	arr = pd.read_csv('C:\\Users\\keerp\\Documents\\Data Science Practicum\\PAM500.csv', header=None).values
+	arr = pd.read_csv('PAM500.csv', header=None).values
 if input == '3':
-	arr = pd.read_csv('C:\\Users\\keerp\\Documents\\Data Science Practicum\\BLOSUM62.csv', header=None).values
+	arr = pd.read_csv('BLOSUM62.csv', header=None).values
 
 print(arr)
 labs = 'ARNDCQEGHILKMFPSTWYV-'
@@ -344,5 +368,5 @@ for u in range(n_taxa, n_nodes): # we call internal nodes "u"
 	matrix_length = matrix_length - 1
 
 # save the result
-output_path = "C:/Users/keerp/Downloads/nj.tree" 
+output_path = "nj.tree" 
 write_tree(output_path, tree, taxon_labels)
