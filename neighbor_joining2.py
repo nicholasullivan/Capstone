@@ -85,76 +85,7 @@ def compute_q_matrix(distance_matrix):
 	return q_matrix
 
 
-#compute naiive prob value of residue for whole data set
-def expected_val(sequences,sequence_length,taxon_labels):
-	alphabet = []
 
-	for i in range(len(sequences)):
-		if i == 0:
-			totals = Counter(sequences[i])
-		else:
-			totals.update(Counter(sequences[i]))
-		
-	for item in totals:
-		alphabet.append(item)
-	#alphabet=sorted(alphabet)
-	#alphabet=alphabet[1::]
-	probs = {
-		letter: totals[letter] / (sequence_length*len(taxon_labels)) for letter in alphabet
-	}
-	
-	return(probs,alphabet)
-
-def expected_val_ND(sequences,sequence_length,taxon_labels):
-	alphabet = []
-
-	for i in range(len(sequences)):
-		if i == 0:
-			totals = Counter(sequences[i])
-		else:
-			totals.update(Counter(sequences[i]))
-		
-	for item in totals:
-		alphabet.append(item)
-	alphabet=sorted(alphabet)
-	alphabet=alphabet[1::]
-	probs = {
-		letter: totals[letter] / (sequence_length*len(taxon_labels)) for letter in alphabet
-	}
-	
-	return(probs,alphabet)
-
-#get columns
-def get_cols(sequences,sequence_length):
-	cols_list = []
-	for j in range(sequence_length):
-		cols = []
-		for i in sequences:
-			cols.append(i[j])
-			s = ''.join(cols)
-		cols_list.append(s)
-	return(cols_list)
-
-#calculates naiive prob of each residue by column
-def col_probs(cols_list,taxon_labels):
-	x=0
-	prob_list = []
-	while x < len(cols_list):
-		for i in range(len(cols_list)):
-			if i == x:
-				totals = Counter(cols_list[i])
-
-		alphabet = []
-		for item in totals:
-			alphabet.append(item)
-
-		probs = {
-			letter: totals[letter] / len(taxon_labels) for letter in sorted(alphabet)
-		}
-		x+=1
-		prob_list.append(probs)
-	df = pd.DataFrame.from_dict(prob_list).fillna(0)
-	return(df)
 
 def realdist(n_taxa,msa): #calculating sigma(s1,s2) for every row and replacing with score
 	#why don't we need sequence_length input here?
@@ -188,6 +119,8 @@ def randdist(n_taxa,msa,sequence_length):
 	counter = 0
 	while seq < (n_taxa-1):
 		comb_list = []
+		seq1 = []
+		seq2 = []
 		if counter == n_taxa:
 			seq += 1
 			print(seq)
@@ -203,57 +136,51 @@ def randdist(n_taxa,msa,sequence_length):
 					continue
 				else:
 					comb_list.append((msa_1,msa_2)) #add to combo list found in two seq
+				seq1.append(msa_1)
+				seq2.append(msa_2)
 		
 		for val in comb_list:
 			comb_score = df[val[0]][val[1]] #find in score mat
 			num1_occ = np.count_nonzero(msa[seq]==val[0]) #count num occ of first val (in first seq)
 			num2_occ = np.count_nonzero(msa[counter]==val[1]) #count num occ of sec val (in sec seq)
-			gap_count1 = np.count_nonzero(msa[seq]==45) #get num of gaps seq 1
-			#gap_count2 = np.count_nonzero(msa[counter]==45) #get num of gaps seq 2
-			rand_score = ((comb_score*num1_occ*num2_occ))/sequence_length - (gap_count1*-2)
+			gap_count1 = np.count_nonzero(seq1==45) #get num of gaps seq 1
+			gap_count2 = np.count_nonzero(seq2==45) #get num of gaps seq 2
+			rand_score = ((comb_score*num1_occ*num2_occ)/sequence_length) - ((gap_count1+gap_count2)*-2) #DO I USE BOTH GAP COUNTS? #all unique or all possible combos?
 			distance_matrix[seq][counter] += rand_score #that score is spot in new_mat
 			
 		counter += 1
 	return distance_matrix
 
-def upper_limits(n_taxa, msa, sequence_length):
-	scores = realdist(n_taxa, msa)
+def upper_limits(n_taxa, reals):
+	scores = reals
 	matrix = numpy.zeros((n_taxa, n_taxa))
 	i = 0
 	while i < (n_taxa-1):
-		j = 0
-		while j < (sequence_length-1):
+		for j in range(n_taxa):
 			matrix[i, j] = (scores[i,i] + scores[j,j]) / 2
-			j = j + 1
-		i = i + 1
+		i += 1
 	return matrix
 
 def dist_mat(n_taxa,msa,sequence_length):
 	similarities = realdist(n_taxa,msa)
 	randoms = randdist(n_taxa,msa,sequence_length)
 	norm_scores = similarities - randoms
-	upper = upper_limits(n_taxa, msa, sequence_length)
+	upper = upper_limits(n_taxa,similarities)
 	upper_norm = upper - randoms
-	raw_dist = -math.log(norm_scores / upper_norm) * 100
+	print(upper[0])
+	print(upper_norm)
+	raw_dist = -np.log10(np.divide(norm_scores, upper_norm)) * 100
+	print(raw_dist[0])
 	#c = 
 	#distance_matrix = c * raw_dist
-	return raw_dist
+	return 
 
 
 # Read in the multiple sequence alignment
 sequences, sequence_length, taxon_labels, msa = read_phylip("real_test2.phy")
 
 
-#TESTING EXPECTED VALUE FOR WHOLE SET
-exp_probs,alphabet = expected_val(sequences,sequence_length,taxon_labels)
 
-exp_probs_ND,alphabet2 = expected_val_ND(sequences,sequence_length,taxon_labels)
-
-
-
-cols_list = get_cols(sequences,sequence_length)
-
-df = col_probs(cols_list,taxon_labels)
 #print(df)
 #print(df.iloc[0,1])
 
@@ -276,7 +203,7 @@ print(arr)
 with_pen = np.empty([21,21])
 for i in range(len(arr)):	
 	with_pen[i] = np.append(arr[i], [-2])
-with_pen[20] = np.append(np.repeat(-2.0, 20), 0.0)
+with_pen[20] = (np.repeat(-2.0, 21))
 print(with_pen)
 
 labs = 'ARNDCQEGHILKMFPSTWYV-'
