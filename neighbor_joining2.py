@@ -74,7 +74,7 @@ def get_lowest_off_diagonal_value_coordinate(matrix):
 	return lowest_value_coordinate
 
 # Compute the neighbor joining Q-matrix from a distance matrix
-def compute_q_matrix(distance_matrix):
+def compute_q_matrix(distance_matrix, matrix_length):
 	q_matrix = (matrix_length - 2.0) * distance_matrix
 
 	for i in range(matrix_length):
@@ -94,20 +94,20 @@ def realdist(n_taxa,msa): #calculating sigma(s1,s2) for every row and replacing 
 	distance_matrix = numpy.zeros((matrix_length, matrix_length))
 	seq = 0
 	counter = 0
-	while seq < (n_taxa-1):
+	while seq < (n_taxa):
 		if counter == n_taxa:
 			seq += 1
 			print(seq)
 			counter = 0
 
 		for j in range(sequence_length):
-			msa_1 = msa[seq][j]#first residue
+			msa_1 = msa[seq-1][j]#first residue
 			msa_2 = msa[counter][j]#second reside
 			if (msa_1 == '-' and msa_2 == '-'): #two gaps calculate nothing
 				continue
 			else:
 				comp = df[msa_1][msa_2] #find in score mat
-				distance_matrix[seq][counter] += comp #that score is spot in new_mat
+				distance_matrix[seq-1][counter] += comp #that score is spot in new_mat
 			
 		counter += 1
 	return distance_matrix
@@ -117,7 +117,7 @@ def randdist(n_taxa,msa,sequence_length):
 	distance_matrix = numpy.zeros((matrix_length, matrix_length))
 	seq = 0
 	counter = 0
-	while seq < (n_taxa-1):
+	while seq < (n_taxa):
 		comb_list = []
 		seq1 = []
 		seq2 = []
@@ -127,7 +127,7 @@ def randdist(n_taxa,msa,sequence_length):
 			counter = 0
 
 		for j in range(sequence_length):
-			msa_1 = msa[seq][j]#first residue
+			msa_1 = msa[seq-1][j]#first residue
 			msa_2 = msa[counter][j]#second reside
 			if (msa_1 == '-' and msa_2 == '-'): #two gaps calculate nothing
 				continue
@@ -141,12 +141,12 @@ def randdist(n_taxa,msa,sequence_length):
 		
 		for val in comb_list:
 			comb_score = df[val[0]][val[1]] #find in score mat
-			num1_occ = np.count_nonzero(msa[seq]==val[0]) #count num occ of first val (in first seq)
+			num1_occ = np.count_nonzero(msa[seq-1]==val[0]) #count num occ of first val (in first seq)
 			num2_occ = np.count_nonzero(msa[counter]==val[1]) #count num occ of sec val (in sec seq)
 			gap_count1 = np.count_nonzero(seq1==45) #get num of gaps seq 1
 			gap_count2 = np.count_nonzero(seq2==45) #get num of gaps seq 2
 			rand_score = ((comb_score*num1_occ*num2_occ)/sequence_length) - ((gap_count1+gap_count2)*-2) #DO I USE BOTH GAP COUNTS? #all unique or all possible combos?
-			distance_matrix[seq][counter] += rand_score #that score is spot in new_mat
+			distance_matrix[seq-1][counter] += rand_score #that score is spot in new_mat
 			
 		counter += 1
 	return distance_matrix
@@ -155,7 +155,7 @@ def upper_limits(n_taxa, reals):
 	scores = reals
 	matrix = numpy.zeros((n_taxa, n_taxa))
 	i = 0
-	while i < (n_taxa-1):
+	while i < (n_taxa):
 		for j in range(n_taxa):
 			matrix[i, j] = (scores[i,i] + scores[j,j]) / 2
 		i += 1
@@ -165,19 +165,30 @@ def dist_mat(n_taxa,msa,sequence_length):
 	similarities = realdist(n_taxa,msa)
 	randoms = randdist(n_taxa,msa,sequence_length)
 	norm_scores = similarities - randoms
+	i = 0
+	while i < (n_taxa):
+		for j in range(n_taxa):
+			if norm_scores[i, j] < 0:
+				norm_scores[i, j] = 0
+		i += 1
+	print("Similarities of first row:", similarities[0])
+	print("Randoms of first row:", randoms[0])
+	print("Norm scores of first row:", norm_scores[0])
 	upper = upper_limits(n_taxa,similarities)
 	upper_norm = upper - randoms
-	print(upper[0])
-	print(upper_norm)
-	raw_dist = -np.log10(np.divide(norm_scores, upper_norm)) * 100
-	print(raw_dist[0])
+	print("Upper[0]:", upper[0])
+	print("Norm Upper Limit scores of first row:", upper_norm[0])
+	raw_dist = -np.log(np.divide(norm_scores, upper_norm)) * 100
+	print("Raw Distance from first sequence to all other sequences:", raw_dist[0])
 	#c = 
 	#distance_matrix = c * raw_dist
-	return 
+	return raw_dist
 
 
 # Read in the multiple sequence alignment
 sequences, sequence_length, taxon_labels, msa = read_phylip("real_test2.phy")
+#print(msa[0])
+#print(msa[20])
 
 
 
@@ -204,7 +215,6 @@ with_pen = np.empty([21,21])
 for i in range(len(arr)):	
 	with_pen[i] = np.append(arr[i], [-2])
 with_pen[20] = (np.repeat(-2.0, 21))
-print(with_pen)
 
 labs = 'ARNDCQEGHILKMFPSTWYV-'
 labels = numpy.fromstring(labs, dtype = "uint8") 
@@ -214,26 +224,15 @@ print(df)
 
 n_taxa = len(taxon_labels)
 n_nodes = n_taxa + n_taxa - 2
-#matrix_length = n_taxa
+matrix_length = n_taxa
 distance_matrix = dist_mat(n_taxa, msa, sequence_length)
-print(distance_matrix)
-
-# real_distance_matrix = realdist(n_taxa,msa)
-
-# print(real_distance_matrix)
-# print(real_distance_matrix[0])
-# print(real_distance_matrix[1])
+print("Raw Distance Matrix:", distance_matrix)
 
 # #random calculation equation
 # #(1/length) sum((each possible residue type)*number of the that residue in i * number of that residue in j))
 # #  - number of gaps *penalty #random ij or sigma r
 
-# rand_dist_matrix = randdist(n_taxa,msa,sequence_length)
-# print(rand_dist_matrix)
-# print(rand_dist_matrix[0])
-# print(rand_dist_matrix[1])
-
-# p_distance_matrix=rand_dist_matrix #temporary to prevent further errors of stuff we havent changed
+# p_distance_matrix = rand_dist_matrix #temporary to prevent further errors of stuff we havent changed
 # #to be replaced
 # for i in range(n_taxa): 
 # 	msa_i = msa[i]
@@ -243,7 +242,7 @@ print(distance_matrix)
 # 		p_distance_matrix[i][j] = 1.0 - identity / sequence_length
 # #print(p_distance_matrix)
 
-# matrix_map = [n for n in range(n_taxa)] # mapping matrix rows and columns to node indices
+matrix_map = [n for n in range(n_taxa)] # mapping matrix rows and columns to node indices
 # distance_matrix = -0.75 * numpy.log(1.0 - 1.3333333333 * p_distance_matrix) # using the Jukes-Cantor 1969 (JC69) model
 
 # #print_matrix("P-distance matrix", matrix_map, p_distance_matrix)
@@ -257,7 +256,7 @@ for u in range(n_taxa, n_nodes): # we call internal nodes "u"
 	if u == n_nodes - 1:
 		f, g = 0, 1 # when this is the seed node, don't have to find the next nodes to branch off
 	else:
-		q_matrix = compute_q_matrix(distance_matrix)
+		q_matrix = compute_q_matrix(distance_matrix, matrix_length)
 		f, g = get_lowest_off_diagonal_value_coordinate(q_matrix) # these are the next nodes to branch off
 
 	fg_distance = distance_matrix[f][g]
