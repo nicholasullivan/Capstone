@@ -195,15 +195,33 @@ def dist_mat(n_taxa,msa,sequence_length):
 # Read in the multiple sequence alignment
 sequences, sequence_length, taxon_labels, msa = read_phylip("real_test2.phy")
 
-
-input = input('Score Matrix?: ')
+print('Hello!\n'
+'Welcome to DNA similarity calculator!\n'
+'Scoring Matrix Options:\n'
+'A- BLOSUM30\n'
+'B- BLOSUM40\n'
+'C- BLOSUM50\n'
+'D- BLOSUM62\n'
+'E- PAM300\n'
+'F- PAM400\n'
+'G- PAM500\n'
+)
+input = input('Select your desired scoring matrix: ')
 print(input)
-if input == '1':
+if input == 'A':
 	arr = pd.read_csv('BLOSUM30.csv', header=None).values #importing BLOSUM 30 (need to clean this)
-if input == '2':
-	arr = pd.read_csv('PAM500.csv', header=None).values
-if input == '3':
+if input == 'B':
+	arr = pd.read_csv('BLOSUM40.csv', header=None).values
+if input == 'C':
+	arr = pd.read_csv('BLOSUM50.csv', header=None).values
+if input == 'D':
 	arr = pd.read_csv('BLOSUM62.csv', header=None).values
+if input == 'E':
+	arr = pd.read_csv('PAM300.csv', header=None).values
+if input == 'F':
+	arr = pd.read_csv('PAM400.csv', header=None).values
+if input == 'G':
+	arr = pd.read_csv('PAM500.csv', header=None).values
 
 print(arr)
 with_pen = np.empty([21,21])
