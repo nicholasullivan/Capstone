@@ -87,13 +87,14 @@ def compute_q_matrix(distance_matrix, matrix_length):
 
 
 
-def realdist(n_taxa,msa): #calculating sigma(s1,s2) for every row and replacing with score
+def realdist(n_taxa,msa,sequence_length): #calculating sigma(s1,s2) for every row and replacing with score
 	#why don't we need sequence_length input here?
 	#make distance matrix of zeros
 	matrix_length = n_taxa
 	distance_matrix = numpy.zeros((matrix_length, matrix_length))
 	seq = 0
 	counter = 0
+
 	while seq < (n_taxa):
 		if counter == n_taxa:
 			seq += 1
@@ -103,7 +104,7 @@ def realdist(n_taxa,msa): #calculating sigma(s1,s2) for every row and replacing 
 		for j in range(sequence_length):
 			msa_1 = msa[seq-1][j]#first residue
 			msa_2 = msa[counter][j]#second reside
-			if (msa_1 == '-' and msa_2 == '-'): #two gaps calculate nothing
+			if (msa_1 == 45 and msa_2 == 45): #two gaps calculate nothing
 				continue
 			else:
 				comp = df[msa_1][msa_2] #find in score mat
@@ -117,35 +118,42 @@ def randdist(n_taxa,msa,sequence_length):
 	distance_matrix = numpy.zeros((matrix_length, matrix_length))
 	seq = 0
 	counter = 0
+	flag = False
 	while seq < (n_taxa):
 		comb_list = []
 		seq1 = []
 		seq2 = []
-		if counter == n_taxa:
+		if counter == n_taxa-len(seq1):
 			seq += 1
 			print(seq)
 			counter = 0
-
 		for j in range(sequence_length):
 			msa_1 = msa[seq-1][j]#first residue
 			msa_2 = msa[counter][j]#second reside
-			if (msa_1 == '-' and msa_2 == '-'): #two gaps calculate nothing
+			if (msa_1 == 45 and msa_2 == 45): #two gaps calculate nothing
 				continue
+			
 			else:
-				if (msa_1,msa_2) in comb_list: #combo already found, dont add it
-					continue
-				else:
-					comb_list.append((msa_1,msa_2)) #add to combo list found in two seq
-				seq1.append(msa_1)
-				seq2.append(msa_2)
+				if (msa_1,msa_2) not in comb_list: #combo already found, dont add it
+					comb_list.append((msa_1,msa_2))
+			seq1.append(msa_1)
+			seq2.append(msa_2)
 		
 		for val in comb_list:
 			comb_score = df[val[0]][val[1]] #find in score mat
-			num1_occ = np.count_nonzero(msa[seq-1]==val[0]) #count num occ of first val (in first seq)
-			num2_occ = np.count_nonzero(msa[counter]==val[1]) #count num occ of sec val (in sec seq)
-			gap_count1 = np.count_nonzero(seq1==45) #get num of gaps seq 1
-			gap_count2 = np.count_nonzero(seq2==45) #get num of gaps seq 2
-			rand_score = ((comb_score*num1_occ*num2_occ)/sequence_length) - ((gap_count1+gap_count2)*-2) #DO I USE BOTH GAP COUNTS? #all unique or all possible combos?
+			num1_occ = seq1.count(val[0]) #count num occ of first val (in first seq)
+			num2_occ = seq2.count(val[1]) #count num occ of sec val (in sec seq)
+			gap_count1 = seq1.count(45) #get num of gaps seq 1
+			gap_count2 = seq2.count(45)#get num of gaps seq 2
+			if flag == False: #trying to see the first set of nums and schtuff
+				print('1',seq1)
+				print('2',seq2)
+				print('len',len(seq1))
+				print('gap1',gap_count1)
+				print('gap2',gap_count2)
+				print('combs',comb_list)
+				flag=True
+			rand_score = ((comb_score*num1_occ*num2_occ)/len(seq1)) - ((gap_count1+gap_count2)*-2) 
 			distance_matrix[seq-1][counter] += rand_score #that score is spot in new_mat
 			
 		counter += 1
@@ -162,44 +170,31 @@ def upper_limits(n_taxa, reals):
 	return matrix
 
 def dist_mat(n_taxa,msa,sequence_length):
-	similarities = realdist(n_taxa,msa)
+	similarities = realdist(n_taxa,msa,sequence_length)
 	randoms = randdist(n_taxa,msa,sequence_length)
-	norm_scores = similarities - randoms
-	i = 0
-	while i < (n_taxa):
-		for j in range(n_taxa):
-			if norm_scores[i, j] < 0:
-				norm_scores[i, j] = 0
-		i += 1
+	norm_scores = np.subtract(similarities , randoms)
 	print("Similarities of first row:", similarities[0])
 	print("Randoms of first row:", randoms[0])
 	print("Norm scores of first row:", norm_scores[0])
 	upper = upper_limits(n_taxa,similarities)
-	upper_norm = upper - randoms
+	upper_norm = np.subtract(upper , randoms)
 	print("Upper[0]:", upper[0])
 	print("Norm Upper Limit scores of first row:", upper_norm[0])
-	raw_dist = -np.log(np.divide(norm_scores, upper_norm)) * 100
+	raw_dist = -np.log((np.divide(norm_scores, upper_norm))) * 100
 	print("Raw Distance from first sequence to all other sequences:", raw_dist[0])
-	#c = 
+	#c =  
 	#distance_matrix = c * raw_dist
 	return raw_dist
 
 
+#TODO:
+	#Fix randdist
+	#add in fast file readin
+
+
 # Read in the multiple sequence alignment
 sequences, sequence_length, taxon_labels, msa = read_phylip("real_test2.phy")
-#print(msa[0])
-#print(msa[20])
 
-
-
-#print(df)
-#print(df.iloc[0,1])
-
-
-#TODO:
-#REPLACE DISTANCE FUNCTION WITH THE ONE FROM THE PAPER
-#find each pair combo, find that score in Score matrix (BLOSUM, whatev), then put that score in a list, sum the scores for those two, then do it for each sequence combo
-#resulting in a matrix of scores between each sequence
 
 input = input('Score Matrix?: ')
 print(input)
@@ -228,11 +223,8 @@ matrix_length = n_taxa
 distance_matrix = dist_mat(n_taxa, msa, sequence_length)
 print("Raw Distance Matrix:", distance_matrix)
 
-# #random calculation equation
-# #(1/length) sum((each possible residue type)*number of the that residue in i * number of that residue in j))
-# #  - number of gaps *penalty #random ij or sigma r
 
-# p_distance_matrix = rand_dist_matrix #temporary to prevent further errors of stuff we havent changed
+# p_distance_matrix = rand_dist_matrix 
 # #to be replaced
 # for i in range(n_taxa): 
 # 	msa_i = msa[i]
@@ -257,6 +249,7 @@ for u in range(n_taxa, n_nodes): # we call internal nodes "u"
 		f, g = 0, 1 # when this is the seed node, don't have to find the next nodes to branch off
 	else:
 		q_matrix = compute_q_matrix(distance_matrix, matrix_length)
+		#print('q',q_matrix)
 		f, g = get_lowest_off_diagonal_value_coordinate(q_matrix) # these are the next nodes to branch off
 
 	fg_distance = distance_matrix[f][g]
@@ -300,5 +293,5 @@ for u in range(n_taxa, n_nodes): # we call internal nodes "u"
 	matrix_length = matrix_length - 1
 
 # save the result
-output_path = "nj.tree" 
+output_path = "C:\\Users\\keerp\\Documents\\Data Science Practicum\\nj.tree" 
 write_tree(output_path, tree, taxon_labels)
