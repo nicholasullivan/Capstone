@@ -108,41 +108,44 @@ class Calculations:
 		seq = 0
 		counter = 0
 
-		while seq < (n_taxa):
+		while True:
 			if counter == n_taxa:
+				print('seq',seq)
 				seq += 1
-				print(seq)
+				if seq == n_taxa:
+					return distance_matrix
 				counter = 0
 
 			for j in range(sequence_length):
-				msa_1 = msa[seq-1][j]#first residue
+				msa_1 = msa[seq][j]#first residue
 				msa_2 = msa[counter][j]#second reside
 				if (msa_1 == 45 and msa_2 == 45): #two gaps calculate nothing
 					continue
 				else:
 					comp = df[msa_1][msa_2] #find in score mat
-					distance_matrix[seq-1][counter] += comp #that score is spot in new_mat
-				
+					distance_matrix[seq][counter] += comp #that score is spot in new_mat
+			print('counter',counter)
 			counter += 1
-		return distance_matrix
+
 
 	def randscore(df,n_taxa,msa,sequence_length):
 		matrix_length = n_taxa
 		distance_matrix = numpy.zeros((matrix_length, matrix_length))
 		seq = 0
 		counter = 0
-		flag = False
-		while seq < (n_taxa):
+		while True:
 			rand_score=0
 			comb_list = []
 			seq1 = []
 			seq2 = []
-			if counter == n_taxa-len(seq1):
+			if counter == n_taxa:
+				print('seq',seq)
 				seq += 1
-				print(seq)
+				if seq == n_taxa:
+					return distance_matrix
 				counter = 0
 			for j in range(sequence_length):
-				msa_1 = msa[seq-1][j]#first residue
+				msa_1 = msa[seq][j]#first residue
 				msa_2 = msa[counter][j]#second reside
 				if (msa_1 == 45 and msa_2 == 45): #two gaps calculate nothing
 					continue
@@ -159,19 +162,11 @@ class Calculations:
 				num2_occ = seq2.count(val[1]) #count num occ of sec val (in sec seq)
 				gap_count1 = seq1.count(45) #get num of gaps seq 1
 				gap_count2 = seq2.count(45)#get num of gaps seq 2
-				if flag == False: #trying to see the first set of nums and schtuff
-					print('1',seq1)
-					print('2',seq2)
-					print('len',len(seq1))
-					print('gap1',gap_count1)
-					print('gap2',gap_count2)
-					print('combs',comb_list)
-					flag=True
 				rand_score += (comb_score*num1_occ*num2_occ)  
-			distance_matrix[seq-1][counter] = (rand_score/len(seq1))- ((gap_count1+gap_count2)*2) #that score is spot in new_mat
-				
+			distance_matrix[seq][counter] = (rand_score/len(seq1))- ((gap_count1+gap_count2)*2) #that score is spot in new_mat
+			print('counter',counter)
 			counter += 1
-		return distance_matrix
+
 
 	def identityscore(n_taxa, reals):
 		scores = reals
@@ -187,14 +182,14 @@ class Calculations:
 		real = Calculations.realscore(df,n_taxa,msa,sequence_length)
 		rand = Calculations.randscore(df,n_taxa,msa,sequence_length)
 		norm_scores = np.subtract(real , rand)
-		print("Real score of first row:", real[0])
+		print("Real score of first row:", real)
 		print("Rand score of first row:", rand[0])
 		print("Norm scores of first row:", norm_scores[0])
 		identity = Calculations.identityscore(n_taxa,real)
 		upper_norm = np.subtract(identity , rand)
 		print("Identity score first row:", identity[0])
 		print("Norm Upper Limit scores of first row:", upper_norm[0])
-		raw_dist = -np.log(np.divide(norm_scores, upper_norm))
+		raw_dist = -np.log(np.divide(norm_scores, upper_norm))*100
 		print("Raw Distance from first sequence to all other sequences:", raw_dist[0])
 		#c =  
 		#distance_matrix = c * raw_dist
