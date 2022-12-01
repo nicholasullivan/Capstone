@@ -100,7 +100,7 @@ class Calculations:
 
 
 
-	def realdist(df,n_taxa,msa,sequence_length): #calculating sigma(s1,s2) for every row and replacing with score
+	def realscore(df,n_taxa,msa,sequence_length): #calculating sigma(s1,s2) for every row and replacing with score
 		#why don't we need sequence_length input here?
 		#make distance matrix of zeros
 		matrix_length = n_taxa
@@ -126,13 +126,14 @@ class Calculations:
 			counter += 1
 		return distance_matrix
 
-	def randdist(df,n_taxa,msa,sequence_length):
+	def randscore(df,n_taxa,msa,sequence_length):
 		matrix_length = n_taxa
 		distance_matrix = numpy.zeros((matrix_length, matrix_length))
 		seq = 0
 		counter = 0
 		flag = False
 		while seq < (n_taxa):
+			rand_score=0
 			comb_list = []
 			seq1 = []
 			seq2 = []
@@ -166,13 +167,13 @@ class Calculations:
 					print('gap2',gap_count2)
 					print('combs',comb_list)
 					flag=True
-				rand_score = ((comb_score*num1_occ*num2_occ)/len(seq1)) - ((gap_count1+gap_count2)*-2) 
-				distance_matrix[seq-1][counter] += rand_score #that score is spot in new_mat
+				rand_score += (comb_score*num1_occ*num2_occ)  
+			distance_matrix[seq-1][counter] = (rand_score/len(seq1))- ((gap_count1+gap_count2)*2) #that score is spot in new_mat
 				
 			counter += 1
 		return distance_matrix
 
-	def upper_limits(n_taxa, reals):
+	def identityscore(n_taxa, reals):
 		scores = reals
 		matrix = numpy.zeros((n_taxa, n_taxa))
 		i = 0
@@ -183,17 +184,17 @@ class Calculations:
 		return matrix
 
 	def dist_mat(df,n_taxa,msa,sequence_length):
-		similarities = Calculations.realdist(df,n_taxa,msa,sequence_length)
-		randoms = Calculations.randdist(df,n_taxa,msa,sequence_length)
-		norm_scores = np.subtract(similarities , randoms)
-		print("Similarities of first row:", similarities[0])
-		print("Randoms of first row:", randoms[0])
+		real = Calculations.realscore(df,n_taxa,msa,sequence_length)
+		rand = Calculations.randscore(df,n_taxa,msa,sequence_length)
+		norm_scores = np.subtract(real , rand)
+		print("Real score of first row:", real[0])
+		print("Rand score of first row:", rand[0])
 		print("Norm scores of first row:", norm_scores[0])
-		upper = Calculations.upper_limits(n_taxa,similarities)
-		upper_norm = np.subtract(upper , randoms)
-		print("Upper[0]:", upper[0])
+		identity = Calculations.identityscore(n_taxa,real)
+		upper_norm = np.subtract(identity , rand)
+		print("Identity score first row:", identity[0])
 		print("Norm Upper Limit scores of first row:", upper_norm[0])
-		raw_dist = -np.log((np.divide(norm_scores, upper_norm)) * 100)
+		raw_dist = -np.log(np.divide(norm_scores, upper_norm))
 		print("Raw Distance from first sequence to all other sequences:", raw_dist[0])
 		#c =  
 		#distance_matrix = c * raw_dist
