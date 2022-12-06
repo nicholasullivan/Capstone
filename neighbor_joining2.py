@@ -224,19 +224,19 @@ class Calculations:
 		value = input('Select your desired scoring matrix: ')
 		print(value)
 		if value == 'A':
-			arr = pd.read_csv('BLOSUM30.csv', header=None).values #importing BLOSUM 30 (need to clean this)
+			arr = pd.read_csv('Matrices/BLOSUM30.csv', header=None).values #importing BLOSUM 30 (need to clean this)
 		if value == 'B':
-			arr = pd.read_csv('BLOSUM40.csv', header=None).values
+			arr = pd.read_csv('Matrices/BLOSUM40.csv', header=None).values
 		if value == 'C':
-			arr = pd.read_csv('BLOSUM50.csv', header=None).values
+			arr = pd.read_csv('Matrices/BLOSUM50.csv', header=None).values
 		if value == 'D':
-			arr = pd.read_csv('BLOSUM62.csv', header=None).values
+			arr = pd.read_csv('Matrices/BLOSUM62.csv', header=None).values
 		if value == 'E':
-			arr = pd.read_csv('PAM300.csv', header=None).values
+			arr = pd.read_csv('Matrices/PAM300.csv', header=None).values
 		if value == 'F':
-			arr = pd.read_csv('PAM400.csv', header=None).values
+			arr = pd.read_csv('Matrices/PAM400.csv', header=None).values
 		if value == 'G':
-			arr = pd.read_csv('PAM500.csv', header=None).values
+			arr = pd.read_csv('Matrices/PAM500.csv', header=None).values
 
 		print(arr)
 		with_pen = np.empty([21,21])
@@ -326,6 +326,6 @@ for u in range(n_taxa, n_nodes): # we call internal nodes "u"
 	matrix_length = matrix_length - 1
 
 # save the result
-output_path = "C:\\Users\\keerp\\Documents\\Data Science Practicum\\nj.tree" 
+output_path = "nj.tree" 
 write_tree(output_path, tree, taxon_labels)
 """
