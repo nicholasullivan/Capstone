@@ -164,7 +164,7 @@ class Calculations:
 				gap_count2 = seq2.count(45)#get num of gaps seq 2
 				rand_score += (comb_score*num1_occ*num2_occ)  
 			distance_matrix[seq][counter] = (rand_score/len(seq1))- ((gap_count1+gap_count2)*2) #that score is spot in new_mat
-			print('counter',counter)
+			#print('counter',counter)
 			counter += 1
 
 
