@@ -266,66 +266,66 @@ class Calculations:
 # 		identity = float(numpy.sum(msa_i == msa_j))
 # 		p_distance_matrix[i][j] = 1.0 - identity / sequence_length
 # #print(p_distance_matrix)
-"""
-matrix_map = [n for n in range(n_taxa)] # mapping matrix rows and columns to node indices
-# distance_matrix = -0.75 * numpy.log(1.0 - 1.3333333333 * p_distance_matrix) # using the Jukes-Cantor 1969 (JC69) model
+		"""
+		matrix_map = [n for n in range(n_taxa)] # mapping matrix rows and columns to node indices
+		# distance_matrix = -0.75 * numpy.log(1.0 - 1.3333333333 * p_distance_matrix) # using the Jukes-Cantor 1969 (JC69) model
 
-# #print_matrix("P-distance matrix", matrix_map, p_distance_matrix)
-# #print_matrix("Distance matrix", matrix_map, distance_matrix)
+		# #print_matrix("P-distance matrix", matrix_map, p_distance_matrix)
+		# #print_matrix("Distance matrix", matrix_map, distance_matrix)
 
-tree = []
-for i in range(n_nodes):
-	tree.append({})
+		tree = []
+		for i in range(n_nodes):
+			tree.append({})
 
-for u in range(n_taxa, n_nodes): # we call internal nodes "u"
-	if u == n_nodes - 1:
-		f, g = 0, 1 # when this is the seed node, don't have to find the next nodes to branch off
-	else:
-		q_matrix = compute_q_matrix(distance_matrix, matrix_length)
-		#print('q',q_matrix)
-		f, g = get_lowest_off_diagonal_value_coordinate(q_matrix) # these are the next nodes to branch off
+		for u in range(n_taxa, n_nodes): # we call internal nodes "u"
+			if u == n_nodes - 1:
+				f, g = 0, 1 # when this is the seed node, don't have to find the next nodes to branch off
+			else:
+				q_matrix = Calculations.compute_q_matrix(distance_matrix, matrix_length)
+				#print('q',q_matrix)
+				f, g = Calculations.get_lowest_off_diagonal_value_coordinate(q_matrix) # these are the next nodes to branch off
 
-	fg_distance = distance_matrix[f][g]
-	f_length = 0.5 * fg_distance + (numpy.sum(distance_matrix[f]) - numpy.sum(distance_matrix[g])) / (2.0 * (matrix_length - 2))
-	g_length = fg_distance - f_length
+			fg_distance = distance_matrix[f][g]
+			f_length = 0.5 * fg_distance + (numpy.sum(distance_matrix[f]) - numpy.sum(distance_matrix[g])) / (2.0 * (matrix_length - 2))
+			g_length = fg_distance - f_length
 
-	# add the edges and branch lengths
-	tree[u][matrix_map[f]] = f_length
-	tree[u][matrix_map[g]] = g_length
+			# add the edges and branch lengths
+			tree[u][matrix_map[f]] = f_length
+			tree[u][matrix_map[g]] = g_length
 
-	# if this is the seed node, fill in the last root branch length and stop calculating
-	if u == n_nodes - 1:
-		tree[u][matrix_map[2]] = distance_matrix[0][2] - f_length
-		break
+			# if this is the seed node, fill in the last root branch length and stop calculating
+			if u == n_nodes - 1:
+				tree[u][matrix_map[2]] = distance_matrix[0][2] - f_length
+				break
 
-	new_distance_matrix = numpy.zeros((matrix_length - 1, matrix_length - 1))
+			new_distance_matrix = numpy.zeros((matrix_length - 1, matrix_length - 1))
 
-	# a and b are the old indices, i and j are the new indices
-	i = 0
-	new_matrix_map = [u]
-	for a in range(matrix_length):
-		if (a != f) and (a != g): # skip the rows to be merged
-			i += 1
-			j = 0
+			# a and b are the old indices, i and j are the new indices
+			i = 0
+			new_matrix_map = [u]
+			for a in range(matrix_length):
+				if (a != f) and (a != g): # skip the rows to be merged
+					i += 1
+					j = 0
 
-			new_matrix_map.append(matrix_map[a])
+					new_matrix_map.append(matrix_map[a])
 
-			ua_distance = 0.5 * (distance_matrix[f][a] + distance_matrix[g][a] - fg_distance)
-			new_distance_matrix[0][i] = ua_distance
-			new_distance_matrix[i][0] = ua_distance
+					ua_distance = 0.5 * (distance_matrix[f][a] + distance_matrix[g][a] - fg_distance)
+					new_distance_matrix[0][i] = ua_distance
+					new_distance_matrix[i][0] = ua_distance
 
-			for b in range(matrix_length): # skip the columns to be merged
-				if (b != f) and (b != g):
-					j += 1
-					new_distance_matrix[i][j] = distance_matrix[a][b]
+					for b in range(matrix_length): # skip the columns to be merged
+						if (b != f) and (b != g):
+							j += 1
+							new_distance_matrix[i][j] = distance_matrix[a][b]
 
-	#print_matrix("Distance matrix", new_matrix_map, new_distance_matrix)
+			#print_matrix("Distance matrix", new_matrix_map, new_distance_matrix)
 
-	distance_matrix = new_distance_matrix
-	matrix_map = new_matrix_map
-	matrix_length = matrix_length - 1
+			distance_matrix = new_distance_matrix
+			matrix_map = new_matrix_map
+			matrix_length = matrix_length - 1
 
-# save the result
-output_path = "nj.tree" 
-write_tree(output_path, tree, taxon_labels)
-"""
+		# save the result
+		output_path = "nj.tree" 
+		Calculations.write_tree(output_path, tree, taxon_labels)"""
+		
