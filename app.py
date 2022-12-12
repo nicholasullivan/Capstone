@@ -5,18 +5,21 @@ from neighbor_joining2 import *
 
 class App:
 
-    def __init__(self, master):
+    def __init__( self, master):
 
-        canvas=tk.Canvas(root, height=700, width=700, background='orange')
-        canvas.pack()
+        self.canvas=tk.Canvas(root, height=700, width=700, background='orange')
+        self.canvas.pack()
 
-        frame= tk.Frame(root, background='white')
-        frame.place(relwidth=.9,relheight=.9,relx=.05,rely=.05)
+        self.frame= tk.Frame(root, background='white')
+        self.frame.place(relwidth=.9,relheight=.9,relx=.05,rely=.05)
 
-        title=tk.Label(frame, text="DNA Sequence Similarity Calculator")
+        self.title=tk.Label(self.frame, text="DNA Sequence Similarity Calculator")
 
-        start=tk.Button(frame,text="Start",padx=40, pady=20,command= lambda: Calculations.start())
-        start.place(x= 275,y=375)
+        self.start=tk.Button(self.frame,text="Start",font= ("lucida 20 bold italic", 14),padx=40, pady=20,command= lambda: Calculations.start())
+        self.start.place(x= 270,y=375)
+
+        self.quit=tk.Button(self.frame,text="Quit App",font= ("lucida 20 bold italic", 10),padx=10, pady=10,command= root.destroy)
+        self.quit.place(x= 540,y=18)
 
 root = Tk()
 app = App(root)
