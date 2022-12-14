@@ -203,16 +203,16 @@ class Calculations:
 
 	# Read in the multiple sequence alignment
 	#sequences, sequence_length, taxon_labels, msa = read_phylip("real_test2.phy")
-	def start():
+	def file_select():
 		print('Hello!\n'
 		'Welcome to DNA similarity calculator!\n'
 		'Select your desired phylip file:')
 		Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
 		filename = askopenfilename() # show an "Open" dialog box and return the path to the selected file
 		print(filename+ ' selected\n')
-		sequences, sequence_length, taxon_labels, msa = Calculations.read_phylip(filename)
+		Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_phylip(filename)
 
-		print('Scoring Matrix Options:\n'
+		"""print('Scoring Matrix Options:\n'
 		'A- BLOSUM30\n'
 		'B- BLOSUM40\n'
 		'C- BLOSUM50\n'
@@ -220,9 +220,8 @@ class Calculations:
 		'E- PAM300\n'
 		'F- PAM400\n'
 		'G- PAM500\n'
-		)
-		value = input('Select your desired scoring matrix: ')
-		print(value)
+		)"""
+	def matrix_selection(value):
 		if value == 'A':
 			arr = pd.read_csv('Matrices/BLOSUM30.csv', header=None).values #importing BLOSUM 30 (need to clean this)
 		if value == 'B':
@@ -250,10 +249,10 @@ class Calculations:
 		print(df)
 
 
-		n_taxa = len(taxon_labels)
+		n_taxa = len(Calculations.taxon_labels)
 		n_nodes = n_taxa + n_taxa - 2
 		matrix_length = n_taxa
-		distance_matrix = Calculations.dist_mat(df,n_taxa, msa, sequence_length)
+		distance_matrix = Calculations.dist_mat(df,n_taxa, Calculations.msa, Calculations.sequence_length)
 		print("Raw Distance Matrix:", distance_matrix)
 
 
@@ -266,7 +265,7 @@ class Calculations:
 # 		identity = float(numpy.sum(msa_i == msa_j))
 # 		p_distance_matrix[i][j] = 1.0 - identity / sequence_length
 # #print(p_distance_matrix)
-		"""
+		
 		matrix_map = [n for n in range(n_taxa)] # mapping matrix rows and columns to node indices
 		# distance_matrix = -0.75 * numpy.log(1.0 - 1.3333333333 * p_distance_matrix) # using the Jukes-Cantor 1969 (JC69) model
 
@@ -327,5 +326,7 @@ class Calculations:
 
 		# save the result
 		output_path = "nj.tree" 
-		Calculations.write_tree(output_path, tree, taxon_labels)"""
+		def get_file():
+			return output_path
+		Calculations.write_tree(output_path, tree, Calculations.taxon_labels)
 		

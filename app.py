@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, Text
 import os
 from neighbor_joining2 import *
+from PIL import Image, ImageTk
 
 class App:
 
@@ -13,14 +14,50 @@ class App:
         self.frame= tk.Frame(root, background='white')
         self.frame.place(relwidth=.9,relheight=.9,relx=.05,rely=.05)
 
-        self.title=tk.Label(self.frame, text="DNA Sequence Similarity Calculator")
+        """def open_new_win():
+            top=tk.Toplevel(self.canvas)
+            self.canvas2=tk.Canvas(root, height=180, width=100, bg="#aaaffe")
+            self.canvas2.pack()
+            tk.Label(self.canvas2, text="Tree File", font='Helvetica 18 bold').pack()"""
 
-        self.start=tk.Button(self.frame,text="Start",font= ("lucida 20 bold italic", 14),padx=40, pady=20,command= lambda: Calculations.start())
-        self.start.place(x= 270,y=375)
+        self.title=tk.Label(self.frame, text="Protein Sequence\nDistance Calculator",font= ("lucida 20 bold italic", 16))
+        self.title.place(x=230,y=30)
+
+        self.pic=Image.open('capstone_image.jpg')
+        self.pic=self.pic.resize((200, 200))
+        self.pic=ImageTk.PhotoImage(self.pic)
+        self.pic_win = tk.Label(root, image = self.pic)
+        self.pic_win.place(x=33,y=33)
+
+
+        self.file=tk.Button(self.frame,text="File Select",font= ("lucida 20 bold italic", 10),padx=20, pady=10,command= lambda: Calculations.file_select())
+        self.file.place(x= 270,y=180)
 
         self.quit=tk.Button(self.frame,text="Quit App",font= ("lucida 20 bold italic", 10),padx=10, pady=10,command= root.destroy)
         self.quit.place(x= 540,y=18)
 
+        self.matrix=tk.Label(self.frame, text='Scoring Matrix Options:\n'
+		'A- BLOSUM30\n'
+		'B- BLOSUM40\n'
+		'C- BLOSUM50\n'
+		'D- BLOSUM62\n'
+		'E- PAM300\n'
+		'F- PAM400\n'
+		'G- PAM500\n',padx=40, pady=25)
+        self.matrix.place(x= 230,y=250)
+
+        self.selection=tk.StringVar()
+        self.mat=tk.Entry(self.frame, width=15,textvariable=self.selection)
+        self.mat.place(x= 270,y=450)
+
+        #self.file=tk.Button(self.frame,text="Get Tree File",font= ("lucida 20 bold italic", 10),padx=10, pady=10,command= self.canvas.text = canvas.create_text(20, 30, text=Calculations.get_file()))
+        #self.file.place(x= 500,y=118)
+        """def submission(text):
+            Calculations.matrix_selection(text)"""
+        self.submit=tk.Button(self.frame,text="Submit",font= ("lucida 20 bold italic", 8),padx=8, pady=5,command= lambda: Calculations.matrix_selection(self.mat.get()))
+        self.submit.place(x= 370,y=450)
+
+        
 root = Tk()
 app = App(root)
 
