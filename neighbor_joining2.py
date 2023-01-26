@@ -13,7 +13,7 @@ import os
 import warnings
 from collections import Counter
 import pandas as pd
-import math
+import itertools
 import numpy as np
 from tqdm import tqdm
 from tkinter import Tk     # from tkinter import Tk for Python 3.x
@@ -124,18 +124,20 @@ class Calculations:
 				else:
 					comp = df[msa_1][msa_2] #find in score mat
 					distance_matrix[seq][counter] += comp #that score is spot in new_mat
-			print('counter',counter)
 			counter += 1
 
+	def checkIfDuplicates_1(listOfElems):
+		if len(listOfElems) == len(set(listOfElems)):
+			return False
+		else:
+			return True
 
-	def randscore(df,n_taxa,msa,sequence_length):
-		matrix_length = n_taxa
-		distance_matrix = numpy.zeros((matrix_length, matrix_length))
+	def randscore(df,n_taxa,msa):
+		distance_matrix = numpy.zeros((n_taxa, n_taxa))
 		seq = 0
 		counter = 0
 		while True:
 			rand_score=0
-			comb_list = []
 			seq1 = []
 			seq2 = []
 			if counter == n_taxa:
@@ -144,18 +146,23 @@ class Calculations:
 				if seq == n_taxa:
 					return distance_matrix
 				counter = 0
-			for j in range(sequence_length):
-				msa_1 = msa[seq][j]#first residue
-				msa_2 = msa[counter][j]#second reside
-				if (msa_1 == 45 and msa_2 == 45): #two gaps calculate nothing
-					continue
-				
-				else:
-					if (msa_1,msa_2) not in comb_list: #combo already found, dont add it
-						comb_list.append((msa_1,msa_2))
-				seq1.append(msa_1)
-				seq2.append(msa_2)
-			
+
+			msa_1 = msa[seq]
+			msa_2 = msa[counter]
+
+			#REMOVE DOUBLE GAPS
+			gap_ind = [i for i, (g, s) in enumerate(zip(msa_1, msa_2)) if g==s==45]
+			seq1 = list(np.delete(msa_1,gap_ind))
+			seq2 = list(np.delete(msa_2,gap_ind))
+
+			#Get all combos of unique residues
+			comb_list = list(itertools.product(np.unique(seq1), np.unique(seq2)))
+
+			#Check
+			#print('combs',comb_list)
+			#print(Calculations.checkIfDuplicates_1(comb_list))
+
+			#Get scores for each combo
 			for val in comb_list:
 				comb_score = df[val[0]][val[1]] #find in score mat
 				num1_occ = seq1.count(val[0]) #count num occ of first val (in first seq)
@@ -164,7 +171,6 @@ class Calculations:
 				gap_count2 = seq2.count(45)#get num of gaps seq 2
 				rand_score += (comb_score*num1_occ*num2_occ)  
 			distance_matrix[seq][counter] = (rand_score/len(seq1))- ((gap_count1+gap_count2)*2) #that score is spot in new_mat
-			#print('counter',counter)
 			counter += 1
 
 
@@ -180,7 +186,7 @@ class Calculations:
 
 	def dist_mat(df,n_taxa,msa,sequence_length):
 		real = Calculations.realscore(df,n_taxa,msa,sequence_length)
-		rand = Calculations.randscore(df,n_taxa,msa,sequence_length)
+		rand = Calculations.randscore(df,n_taxa,msa)
 		norm_scores = np.subtract(real , rand)
 		print("Real score of first row:", real)
 		print("Rand score of first row:", rand[0])
@@ -199,6 +205,8 @@ class Calculations:
 	#TODO:
 		#Fix randdist
 		#add in fast file readin
+		#add matrix selection based on identity score or identity by every two rows
+		#blosum30 means 30 percent identity, 
 
 
 	# Read in the multiple sequence alignment
