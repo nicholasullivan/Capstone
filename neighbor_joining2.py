@@ -1,12 +1,13 @@
 """
-This is a code to calculate the similarities between DNA sequences. It allows the user to input their phylip file and choose the 
-scoring matrix they want. The sequences are then compared using the choosen scoring matrix, go through a neighbor joining and tree 
-building process, and, finally, results are confirmed via boostrapping.
+This is a code to calculate the similarities between DNA sequences. It allows the user to input an msa file in
+phylip (PHY) or fasta (FA) format and choose the scoring matrix they want. The sequences are then compared using
+the choosen scoring matrix, go through a neighbor joining and tree building process, and, finally, results are
+confirmed via boostrapping.
 
 Authors- Troy Hofstrand, Nicholas Sullivan, and Nikolaus Ryczek
-Emails- thofstrand@slu.edu, nsullivan@slu.edu, nryczek@slu.edu
+Emails- troy.hofstrand@slu.edu, nicholas.sullivan@slu.edu, nikolaus.ryczek@slu.edu
 
-Last Date Updated- 11/29/2022
+Last Date Updated- 2/1/2023
 """
 import numpy
 import os
@@ -97,11 +98,8 @@ class Calculations:
 
 		return q_matrix
 
-
-
-
-	def realscore(df,n_taxa,msa,sequence_length): #calculating sigma(s1,s2) for every row and replacing with score
-		#why don't we need sequence_length input here?
+	#calculating sigma(s1,s2) for every row and replacing with score
+	def realscore(df,n_taxa,msa,sequence_length):
 		#make distance matrix of zeros
 		matrix_length = n_taxa
 		distance_matrix = numpy.zeros((matrix_length, matrix_length))
@@ -132,6 +130,7 @@ class Calculations:
 		else:
 			return True
 
+	# calculate random score between each sequence and add to random matrix
 	def randscore(df,n_taxa,msa):
 		distance_matrix = numpy.zeros((n_taxa, n_taxa))
 		seq = 0
@@ -173,7 +172,7 @@ class Calculations:
 			distance_matrix[seq][counter] = (rand_score/len(seq1))- ((gap_count1+gap_count2)*2) #that score is spot in new_mat
 			counter += 1
 
-
+	# calculate identity score of sequence pairs by taking average of each identity score with itself
 	def identityscore(n_taxa, reals):
 		scores = reals
 		matrix = numpy.zeros((n_taxa, n_taxa))
@@ -184,6 +183,7 @@ class Calculations:
 			i += 1
 		return matrix
 
+	# walkthrough of all equations to caluclate distance matrix from original Blosum/PAM matrix
 	def dist_mat(df,n_taxa,msa,sequence_length):
 		real = Calculations.realscore(df,n_taxa,msa,sequence_length)
 		rand = Calculations.randscore(df,n_taxa,msa)
@@ -203,14 +203,23 @@ class Calculations:
 
 
 	#TODO:
-		#Fix randdist
-		#add in fast file readin
-		#add matrix selection based on identity score or identity by every two rows
-		#blosum30 means 30 percent identity, 
+		#fix math of random
+		#add in all matrices
+		#calibration factor?
+		#Build end-to-end application
+			#read in fasta file types
+			#Method to pick Blosum matrix based on identity score
+				#the average percent of the same score between each sequence
+				#Blosum30 means 30 percent identity
+			#quit running terminal when you quit the application
+			#add in all matrices options
+		#Bootstrap
+		#Test the program
 
+		# 65 - A, 82 - R, 78 - N, 68 - D, 67 - C, 81 - Q, 69 - E, 71 - G, 72 - H, 73 - I, 76 - L, 75 - K, 77 - M,
+		# 70 - F, 80 - P, 83 - S, 84 - T, 87 - W, 89 - Y, 86 - V, 45 - -
 
 	# Read in the multiple sequence alignment
-	#sequences, sequence_length, taxon_labels, msa = read_phylip("real_test2.phy")
 	def file_select():
 		print('Hello!\n'
 		'Welcome to DNA similarity calculator!\n'
@@ -229,9 +238,11 @@ class Calculations:
 		'F- PAM400\n'
 		'G- PAM500\n'
 		)"""
+
 	def matrix_selection(value):
+		# import all matrix options
 		if value == 'A':
-			arr = pd.read_csv('Matrices/BLOSUM30.csv', header=None).values #importing BLOSUM 30 (need to clean this)
+			arr = pd.read_csv('Matrices/BLOSUM30.csv', header=None).values
 		if value == 'B':
 			arr = pd.read_csv('Matrices/BLOSUM40.csv', header=None).values
 		if value == 'C':
@@ -245,41 +256,30 @@ class Calculations:
 		if value == 'G':
 			arr = pd.read_csv('Matrices/PAM500.csv', header=None).values
 
+		# add penalty row and column of -2
 		print(arr)
 		with_pen = np.empty([21,21])
 		for i in range(len(arr)):	
 			with_pen[i] = np.append(arr[i], [-2])
 		with_pen[20] = (np.repeat(-2.0, 21))
 
+		# make scoring dataframe
 		labs = 'ARNDCQEGHILKMFPSTWYV-'
 		labels = numpy.fromstring(labs, dtype = "uint8") 
-		df = pd.DataFrame(with_pen,columns=labels,index= labels) #make scoring dataframe
+		df = pd.DataFrame(with_pen, columns = labels, index = labels)
 		print(df)
 
-
+		# calculate distance matrix
 		n_taxa = len(Calculations.taxon_labels)
 		n_nodes = n_taxa + n_taxa - 2
 		matrix_length = n_taxa
 		distance_matrix = Calculations.dist_mat(df,n_taxa, Calculations.msa, Calculations.sequence_length)
 		print("Raw Distance Matrix:", distance_matrix)
-
-
-# p_distance_matrix = rand_dist_matrix 
-# #to be replaced
-# for i in range(n_taxa): 
-# 	msa_i = msa[i]
-# 	for j in range(n_taxa):
-# 		msa_j = msa[i]
-# 		identity = float(numpy.sum(msa_i == msa_j))
-# 		p_distance_matrix[i][j] = 1.0 - identity / sequence_length
-# #print(p_distance_matrix)
 		
-		matrix_map = [n for n in range(n_taxa)] # mapping matrix rows and columns to node indices
-		# distance_matrix = -0.75 * numpy.log(1.0 - 1.3333333333 * p_distance_matrix) # using the Jukes-Cantor 1969 (JC69) model
+		# map matrix rows and columns to node indices
+		matrix_map = [n for n in range(n_taxa)]
 
-		# #print_matrix("P-distance matrix", matrix_map, p_distance_matrix)
-		# #print_matrix("Distance matrix", matrix_map, distance_matrix)
-
+		# create the tree from the distance matrix and msa
 		tree = []
 		for i in range(n_nodes):
 			tree.append({})
@@ -289,7 +289,6 @@ class Calculations:
 				f, g = 0, 1 # when this is the seed node, don't have to find the next nodes to branch off
 			else:
 				q_matrix = Calculations.compute_q_matrix(distance_matrix, matrix_length)
-				#print('q',q_matrix)
 				f, g = Calculations.get_lowest_off_diagonal_value_coordinate(q_matrix) # these are the next nodes to branch off
 
 			fg_distance = distance_matrix[f][g]
@@ -325,8 +324,6 @@ class Calculations:
 						if (b != f) and (b != g):
 							j += 1
 							new_distance_matrix[i][j] = distance_matrix[a][b]
-
-			#print_matrix("Distance matrix", new_matrix_map, new_distance_matrix)
 
 			distance_matrix = new_distance_matrix
 			matrix_map = new_matrix_map
