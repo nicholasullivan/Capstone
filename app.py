@@ -37,25 +37,20 @@ class App:
         self.quit.place(x= 540,y=18)
 
         self.matrix=tk.Label(self.frame, text='Scoring Matrix Options:\n'
-		'A- BLOSUM30\n'
-		'B- BLOSUM40\n'
-		'C- BLOSUM50\n'
-		'D- BLOSUM62\n'
-		'E- PAM300\n'
-		'F- PAM400\n'
-		'G- PAM500\n',padx=40, pady=25)
+		'1- BLOSUM\n'
+		'2- PAM\n',padx=30, pady=15)
         self.matrix.place(x= 230,y=250)
 
         self.selection=tk.StringVar()
         self.mat=tk.Entry(self.frame, width=15,textvariable=self.selection)
-        self.mat.place(x= 270,y=450)
+        self.mat.place(x= 250,y=350)
 
         #self.file=tk.Button(self.frame,text="Get Tree File",font= ("lucida 20 bold italic", 10),padx=10, pady=10,command= self.canvas.text = canvas.create_text(20, 30, text=Calculations.get_file()))
         #self.file.place(x= 500,y=118)
         """def submission(text):
             Calculations.matrix_selection(text)"""
         self.submit=tk.Button(self.frame,text="Submit",font= ("lucida 20 bold italic", 8),padx=8, pady=5,command= lambda: Calculations.matrix_selection(self.mat.get()))
-        self.submit.place(x= 370,y=450)
+        self.submit.place(x= 350,y=350)
 
         
 root = Tk()

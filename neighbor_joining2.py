@@ -99,6 +99,60 @@ class Calculations:
 		return q_matrix
 
 	#calculating sigma(s1,s2) for every row and replacing with score
+
+# walkthrough of all equations to caluclate distance matrix from original Blosum/PAM matrix
+	def dist_mat(df,n_taxa,msa,sequence_length):
+		real = Calculations.realscore(df,n_taxa,msa,sequence_length)
+		rand = Calculations.randscore(df,n_taxa,msa)
+		norm_scores = np.subtract(real , rand)
+		print("Real score of first row:", real)
+		print("Rand score of first row:", rand[0])
+		print("Norm scores of first row:", norm_scores[0])
+		identity = Calculations.identityscore(n_taxa,real)
+		upper_norm = np.subtract(identity , rand)
+		print("Identity score first row:", identity[0])
+		print("Norm Upper Limit scores of first row:", upper_norm[0])
+		raw_dist = -np.log(np.divide(norm_scores, upper_norm))*100
+		print("Raw Distance from first sequence to all other sequences:", raw_dist[0])
+		#c =  
+		#distance_matrix = c * raw_dist
+		return raw_dist
+
+	def similarityscore(msa):
+		seq = 0
+		counter = 1
+		pair_scores=[]
+		while seq<len(msa)-1:
+			score=0
+			seq1 = []
+			seq2 = []
+			if counter == len(msa):
+				#print('seq',seq)
+				seq += 1
+				counter = seq+1
+				if seq==len(msa)-1:
+					break
+
+			msa_1 = msa[seq]
+			msa_2 = msa[counter]
+
+			#REMOVE DOUBLE GAPS , take length before or after???
+			gap_ind = [i for i, (g, s) in enumerate(zip(msa_1, msa_2)) if g==s==45]
+			seq1 = list(np.delete(msa_1,gap_ind))
+			seq2 = list(np.delete(msa_2,gap_ind))
+			length=len(seq1)
+			for n in range(length):
+				if seq1[n]==seq2[n]:
+					score+=1
+			sim_score=score/length
+			print("seq "+str(seq))
+			print("counter "+str(counter))
+			print("score "+str(sim_score))
+			pair_scores.append(sim_score)
+			counter += 1
+		return sum(pair_scores)/len(pair_scores)
+
+
 	def realscore(df,n_taxa,msa,sequence_length):
 		#make distance matrix of zeros
 		matrix_length = n_taxa
@@ -182,26 +236,6 @@ class Calculations:
 				matrix[i, j] = (scores[i,i] + scores[j,j]) / 2
 			i += 1
 		return matrix
-
-	# walkthrough of all equations to caluclate distance matrix from original Blosum/PAM matrix
-	def dist_mat(df,n_taxa,msa,sequence_length):
-		real = Calculations.realscore(df,n_taxa,msa,sequence_length)
-		rand = Calculations.randscore(df,n_taxa,msa)
-		norm_scores = np.subtract(real , rand)
-		print("Real score of first row:", real)
-		print("Rand score of first row:", rand[0])
-		print("Norm scores of first row:", norm_scores[0])
-		identity = Calculations.identityscore(n_taxa,real)
-		upper_norm = np.subtract(identity , rand)
-		print("Identity score first row:", identity[0])
-		print("Norm Upper Limit scores of first row:", upper_norm[0])
-		raw_dist = -np.log(np.divide(norm_scores, upper_norm))*100
-		print("Raw Distance from first sequence to all other sequences:", raw_dist[0])
-		#c =  
-		#distance_matrix = c * raw_dist
-		return raw_dist
-
-
 	#TODO:
 		#fix math of random
 		#add in all matrices
@@ -240,21 +274,51 @@ class Calculations:
 		)"""
 
 	def matrix_selection(value):
-		# import all matrix options
-		if value == 'A':
-			arr = pd.read_csv('Matrices/BLOSUM30.csv', header=None).values
-		if value == 'B':
-			arr = pd.read_csv('Matrices/BLOSUM40.csv', header=None).values
-		if value == 'C':
-			arr = pd.read_csv('Matrices/BLOSUM50.csv', header=None).values
-		if value == 'D':
-			arr = pd.read_csv('Matrices/BLOSUM62.csv', header=None).values
-		if value == 'E':
-			arr = pd.read_csv('Matrices/PAM300.csv', header=None).values
-		if value == 'F':
-			arr = pd.read_csv('Matrices/PAM400.csv', header=None).values
-		if value == 'G':
-			arr = pd.read_csv('Matrices/PAM500.csv', header=None).values
+		print("before")
+		score=Calculations.similarityscore(Calculations.msa)
+		print("after")
+		print(str(score))
+		rounded=score*10
+		rounded=round(rounded)
+		if value == '1':
+			if rounded==3:
+				arr = pd.read_csv('Matrices/BLOSUM30.csv', header=None).values
+				print("30")
+			if rounded==4:
+				arr = pd.read_csv('Matrices/BLOSUM40.csv', header=None).values
+				print("40")
+			if rounded==5:
+				arr = pd.read_csv('Matrices/BLOSUM50.csv', header=None).values
+				print("50")
+			if rounded==6:
+				arr = pd.read_csv('Matrices/BLOSUM62.csv', header=None).values
+				print("60")
+			if rounded==7:
+				arr = pd.read_csv('Matrices/BLOSUM70.csv', header=None).values
+				print("70")
+			if rounded==8:
+				arr = pd.read_csv('Matrices/BLOSUM80.csv', header=None).values
+				print("80")
+			if rounded==9:
+				arr = pd.read_csv('Matrices/BLOSUM90.csv', header=None).values
+				print("90")
+			if rounded==10:
+				arr = pd.read_csv('Matrices/BLOSUM100.csv', header=None).values
+				print("100")
+
+		if value == '2':
+			if rounded==9:
+				arr = pd.read_csv('Matrices/PAM10.csv', header=None).values
+			if rounded==4:
+				arr = pd.read_csv('Matrices/PAM100.csv', header=None).values
+			if rounded==3:
+				arr = pd.read_csv('Matrices/PAM200.csv', header=None).values
+			if rounded==2:
+				arr = pd.read_csv('Matrices/PAM300.csv', header=None).values
+			if rounded==10:
+				arr = pd.read_csv('Matrices/PAM400.csv', header=None).values
+			if rounded==10:
+				arr = pd.read_csv('Matrices/PAM500.csv', header=None).values
 
 		# add penalty row and column of -2
 		print(arr)
@@ -264,7 +328,7 @@ class Calculations:
 		with_pen[20] = (np.repeat(-2.0, 21))
 
 		# make scoring dataframe
-		labs = 'ARNDCQEGHILKMFPSTWYV-'
+		labs = 'ARNDCQEGHILKMFPSTWYV-' #missing letters #BZX
 		labels = numpy.fromstring(labs, dtype = "uint8") 
 		df = pd.DataFrame(with_pen, columns = labels, index = labels)
 		print(df)
