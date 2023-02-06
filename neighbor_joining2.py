@@ -4,10 +4,13 @@ phylip (PHY) or fasta (FA) format and choose the scoring matrix they want. The s
 the choosen scoring matrix, go through a neighbor joining and tree building process, and, finally, results are
 confirmed via boostrapping.
 
+Several packages may need to be downloaded on computer. One of these is the Bio package.
+Download at: https://biopython.org/wiki/Download
+
 Authors- Troy Hofstrand, Nicholas Sullivan, and Nikolaus Ryczek
 Emails- troy.hofstrand@slu.edu, nicholas.sullivan@slu.edu, nikolaus.ryczek@slu.edu
 
-Last Date Updated- 2/1/2023
+Last Date Updated- 2/6/2023
 """
 import numpy
 import os
@@ -19,11 +22,15 @@ import numpy as np
 from tqdm import tqdm
 from tkinter import Tk     # from tkinter import Tk for Python 3.x
 from tkinter.filedialog import askopenfilename
+from Bio import SeqIO
 
 warnings.simplefilter("ignore", DeprecationWarning)
 warnings.simplefilter("ignore", RuntimeWarning)
 
 class Calculations:
+
+	#filename = ''
+	
 	# A function to print out a matrix (e.g. a distance matrix) for human viewing
 	def print_matrix(title, matrix_map, matrix):
 		print(title + ":")
@@ -72,6 +79,24 @@ class Calculations:
 			msa[i] = numpy.fromstring(sequence, dtype = "uint8")
 			sequences.append(sequence)
 		return (sequences, sequence_length, sequence_labels, msa)
+
+	def read_fasta(fasta_path):
+		records = list(SeqIO.parse(fasta_path,'fasta'))
+
+		n_taxa = len(records)
+		sequence_length = len(records[0].seq)
+		sequences = []
+		sequence_labels = []
+		msa = np.zeros((n_taxa, sequence_length), dtype = "uint8")
+
+		for i in range(n_taxa):
+			label = records[i].id
+			sequence = str(records[i].seq)
+			sequence_labels.append(label)
+			sequences.append(sequence)
+			msa[i] = np.fromstring(sequence, dtype = "uint8")
+
+		return(sequences, sequence_length, sequence_labels, msa)
 
 	# Find the coordinates of whatever off-diagonal element of a matrix has the lowest value
 	def get_lowest_off_diagonal_value_coordinate(matrix):
@@ -158,9 +183,9 @@ class Calculations:
 				if seq1[n]==seq2[n]:
 					score+=1
 			sim_score=score/length
-			print("seq "+str(seq))
-			print("counter "+str(counter))
-			print("score "+str(sim_score))
+			#print("seq "+str(seq))
+			#print("counter "+str(counter))
+			#print("score "+str(sim_score))
 			pair_scores.append(sim_score)
 			counter += 1
 		return sum(pair_scores)/len(pair_scores)
@@ -222,9 +247,6 @@ class Calculations:
 			distance_matrix[seq][counter] = (rand_score/len(seq1))- ((gap_count1+gap_count2)*2) #that score is spot in new_mat
 			counter += 1
 
-
-	
-
 	# calculate identity score of sequence pairs by taking average of each identity score with itself
 	def identityscore(n_taxa, reals):
 		scores = reals
@@ -236,16 +258,13 @@ class Calculations:
 			i += 1
 		return matrix
 	#TODO:
-		#fix math of random
-		#add in all matrices
 		#calibration factor?
+		#Method to pick Blosum and PAM matrix based on identity score
+			#BLOSUM - the average percent of the same score between each sequence
+			#PAM - ???
 		#Build end-to-end application
-			#read in fasta file types
-			#Method to pick Blosum matrix based on identity score
-				#the average percent of the same score between each sequence
-				#Blosum30 means 30 percent identity
 			#quit running terminal when you quit the application
-			#add in all matrices options
+			#error pop up when wrong file is inputted
 		#Bootstrap
 		#Test the program
 
@@ -256,21 +275,18 @@ class Calculations:
 	def file_select():
 		print('Hello!\n'
 		'Welcome to DNA similarity calculator!\n'
-		'Select your desired phylip file:')
+		'Select your desired phylip or fasta file:')
 		Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
 		filename = askopenfilename() # show an "Open" dialog box and return the path to the selected file
 		print(filename+ ' selected\n')
-		Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_phylip(filename)
-
-		"""print('Scoring Matrix Options:\n'
-		'A- BLOSUM30\n'
-		'B- BLOSUM40\n'
-		'C- BLOSUM50\n'
-		'D- BLOSUM62\n'
-		'E- PAM300\n'
-		'F- PAM400\n'
-		'G- PAM500\n'
-		)"""
+		file_type = os.path.splitext(filename)[1]
+		if file_type == ".fa":
+			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_fasta(filename)
+		elif file_type == ".phy":
+			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_phylip(filename)
+		else:
+			print('Incorrect file type selected. Please choose a Fasta(.fa) or Phylip(.phy) file.')
+			return
 
 	def matrix_selection(value):
 		#print("before")
@@ -279,7 +295,8 @@ class Calculations:
 		#print(str(score))
 		rounded=score*10
 		rounded=round(rounded)
-		if value == '1':
+
+		if value == 'Auto-assign BLOSUM based on identity':
 			if rounded <=3:
 				arr = pd.read_csv('Matrices/BLOSUM30.csv', header=None).values
 				print("30")
@@ -305,8 +322,7 @@ class Calculations:
 				arr = pd.read_csv('Matrices/BLOSUM100.csv', header=None).values
 				print("100")
 				
-
-		if value == '2':
+		elif value == 'Auto-assign PAM based on identity':
 			if rounded==9:
 				arr = pd.read_csv('Matrices/PAM10.csv', header=None).values
 			if rounded==4:
@@ -319,6 +335,9 @@ class Calculations:
 				arr = pd.read_csv('Matrices/PAM400.csv', header=None).values
 			if rounded==10:
 				arr = pd.read_csv('Matrices/PAM500.csv', header=None).values
+		else:
+			file = 'Matrices/%s.csv'%value
+			arr = pd.read_csv(file, header=None).values
 
 		# add penalty row and column of -2
 		print(arr)
