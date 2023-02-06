@@ -100,9 +100,22 @@ class Calculations:
 
 	#calculating sigma(s1,s2) for every row and replacing with score
 
+	def randComboCalc(msa_1,msa_2,combs=False):
+		#REMOVE DOUBLE GAPS
+		gap_ind = [i for i, (g, s) in enumerate(zip(msa_1, msa_2)) if g==s==45]
+		seq1 = list(np.delete(msa_1,gap_ind))
+		seq2 = list(np.delete(msa_2,gap_ind))
+
+		#Get all combos of unique residues
+		if combs==True:
+			comb_list = list(itertools.product(np.unique(seq1), np.unique(seq2)))
+			return comb_list,seq1,seq2
+		else:
+			return seq1,seq2
+
 # walkthrough of all equations to caluclate distance matrix from original Blosum/PAM matrix
-	def dist_mat(df,n_taxa,msa,sequence_length):
-		real = Calculations.realscore(df,n_taxa,msa,sequence_length)
+	def dist_mat(df,n_taxa,msa):
+		real = Calculations.realscore(df,n_taxa,msa)
 		rand = Calculations.randscore(df,n_taxa,msa)
 		norm_scores = np.subtract(real , rand)
 		print("Real score of first row:", real)
@@ -153,7 +166,7 @@ class Calculations:
 		return sum(pair_scores)/len(pair_scores)
 
 
-	def realscore(df,n_taxa,msa,sequence_length):
+	def realscore(df,n_taxa,msa):
 		#make distance matrix of zeros
 		matrix_length = n_taxa
 		distance_matrix = numpy.zeros((matrix_length, matrix_length))
@@ -167,22 +180,15 @@ class Calculations:
 				if seq == n_taxa:
 					return distance_matrix
 				counter = 0
-
-			for j in range(sequence_length):
-				msa_1 = msa[seq][j]#first residue
-				msa_2 = msa[counter][j]#second reside
-				if (msa_1 == 45 and msa_2 == 45): #two gaps calculate nothing
-					continue
-				else:
-					comp = df[msa_1][msa_2] #find in score mat
-					distance_matrix[seq][counter] += comp #that score is spot in new_mat
+			
+			seq1,seq2 = Calculations.randComboCalc(msa[seq],msa[counter],combs=False)
+			for j in range(len(seq1)):
+				res1 = seq1[j]
+				res2 = seq2[j]
+				comp = df[res1][res2] #find in score mat
+				distance_matrix[seq][counter] += comp #that score is spot in new_mat
 			counter += 1
 
-	def checkIfDuplicates_1(listOfElems):
-		if len(listOfElems) == len(set(listOfElems)):
-			return False
-		else:
-			return True
 
 	# calculate random score between each sequence and add to random matrix
 	def randscore(df,n_taxa,msa):
@@ -203,28 +209,21 @@ class Calculations:
 			msa_1 = msa[seq]
 			msa_2 = msa[counter]
 
-			#REMOVE DOUBLE GAPS
-			gap_ind = [i for i, (g, s) in enumerate(zip(msa_1, msa_2)) if g==s==45]
-			seq1 = list(np.delete(msa_1,gap_ind))
-			seq2 = list(np.delete(msa_2,gap_ind))
-
-			#Get all combos of unique residues
-			comb_list = list(itertools.product(np.unique(seq1), np.unique(seq2)))
-
-			#Check
-			#print('combs',comb_list)
-			#print(Calculations.checkIfDuplicates_1(comb_list))
+			comb_list,seq1,seq2 = Calculations.randComboCalc(msa_1,msa_2,combs=True)
 
 			#Get scores for each combo
+			gap_count1 = seq1.count(45) #get num of gaps seq 1
+			gap_count2 = seq2.count(45)#get num of gaps seq 2
 			for val in comb_list:
 				comb_score = df[val[0]][val[1]] #find in score mat
 				num1_occ = seq1.count(val[0]) #count num occ of first val (in first seq)
 				num2_occ = seq2.count(val[1]) #count num occ of sec val (in sec seq)
-				gap_count1 = seq1.count(45) #get num of gaps seq 1
-				gap_count2 = seq2.count(45)#get num of gaps seq 2
 				rand_score += (comb_score*num1_occ*num2_occ)  
 			distance_matrix[seq][counter] = (rand_score/len(seq1))- ((gap_count1+gap_count2)*2) #that score is spot in new_mat
 			counter += 1
+
+
+	
 
 	# calculate identity score of sequence pairs by taking average of each identity score with itself
 	def identityscore(n_taxa, reals):
@@ -274,14 +273,14 @@ class Calculations:
 		)"""
 
 	def matrix_selection(value):
-		print("before")
+		#print("before")
 		score=Calculations.similarityscore(Calculations.msa)
-		print("after")
-		print(str(score))
+		#print("after")
+		#print(str(score))
 		rounded=score*10
 		rounded=round(rounded)
 		if value == '1':
-			if rounded==3:
+			if rounded <=3:
 				arr = pd.read_csv('Matrices/BLOSUM30.csv', header=None).values
 				print("30")
 			if rounded==4:
@@ -302,9 +301,10 @@ class Calculations:
 			if rounded==9:
 				arr = pd.read_csv('Matrices/BLOSUM90.csv', header=None).values
 				print("90")
-			if rounded==10:
+			if rounded>=10:
 				arr = pd.read_csv('Matrices/BLOSUM100.csv', header=None).values
 				print("100")
+				
 
 		if value == '2':
 			if rounded==9:
@@ -337,7 +337,7 @@ class Calculations:
 		n_taxa = len(Calculations.taxon_labels)
 		n_nodes = n_taxa + n_taxa - 2
 		matrix_length = n_taxa
-		distance_matrix = Calculations.dist_mat(df,n_taxa, Calculations.msa, Calculations.sequence_length)
+		distance_matrix = Calculations.dist_mat(df,n_taxa, Calculations.msa)
 		print("Raw Distance Matrix:", distance_matrix)
 		
 		# map matrix rows and columns to node indices
