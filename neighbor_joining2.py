@@ -10,7 +10,7 @@ Download at: https://biopython.org/wiki/Download
 Authors- Troy Hofstrand, Nicholas Sullivan, and Nikolaus Ryczek
 Emails- troy.hofstrand@slu.edu, nicholas.sullivan@slu.edu, nikolaus.ryczek@slu.edu
 
-Last Date Updated- 2/6/2023
+Last Date Updated- 2/22/2023
 """
 import numpy
 import os
@@ -138,6 +138,25 @@ class Calculations:
 		else:
 			return seq1,seq2
 
+	#Bootstrapping
+	def bootstrap(msa, n_taxa, sequence_length, df):
+		#create n versions of the trees by randomly selecting columns with replacement to recreate n new msa's
+		#What does majority consensus rule use to calculate the consensus? Distances?
+		#this function may have to be integrated into the main one at the bottom or to move some of that stuff up
+		cols = msa.T
+		n = 1
+		dist_mat = Calculations.dist_mat(df, n_taxa, msa)
+		#saved_dat = output step used to run consensus algorithm
+		for i in range(n-1):
+			#shuffle msa
+			idx = np.random.randint(sequence_length, size = sequence_length)
+			msa_new = cols[idx,:].T
+			#should I use the same scoring matrix here?
+			#calculate new distance matrix
+			dist_mat = Calculations.dist_mat(df, n_taxa, msa_new)
+			#update saved_dat
+		return dist_mat
+	
 # walkthrough of all equations to caluclate distance matrix from original Blosum/PAM matrix
 	def dist_mat(df,n_taxa,msa):
 		real = Calculations.realscore(df,n_taxa,msa)
@@ -257,6 +276,8 @@ class Calculations:
 				matrix[i, j] = (scores[i,i] + scores[j,j]) / 2
 			i += 1
 		return matrix
+
+
 	#TODO:
 		#calibration factor?
 		#Method to pick Blosum and PAM matrix based on identity score
@@ -289,12 +310,8 @@ class Calculations:
 			return
 
 	def matrix_selection(value):
-		#print("before")
 		score=Calculations.similarityscore(Calculations.msa)
-		#print("after")
-		#print(str(score))
-		rounded=score*10
-		rounded=round(rounded)
+		rounded = round(score*10)
 
 		if value == 'Auto-assign BLOSUM based on identity':
 			if rounded <=3:
@@ -338,12 +355,14 @@ class Calculations:
 		else:
 			file = 'Matrices/%s.csv'%value
 			arr = pd.read_csv(file, header=None).values
-
-		# add penalty row and column of -2
 		print(arr)
+		Calculations.calculate_dist(arr)
+	
+	def calculate_dist(score_mat):
+		# add penalty row and column of -2
 		with_pen = np.empty([21,21])
-		for i in range(len(arr)):	
-			with_pen[i] = np.append(arr[i], [-2])
+		for i in range(len(score_mat)):	
+			with_pen[i] = np.append(score_mat[i], [-2])
 		with_pen[20] = (np.repeat(-2.0, 21))
 
 		# make scoring dataframe
@@ -354,15 +373,18 @@ class Calculations:
 
 		# calculate distance matrix
 		n_taxa = len(Calculations.taxon_labels)
-		n_nodes = n_taxa + n_taxa - 2
-		matrix_length = n_taxa
-		distance_matrix = Calculations.dist_mat(df,n_taxa, Calculations.msa)
+		distance_matrix = Calculations.bootstrap(Calculations.msa, n_taxa, Calculations.sequence_length, df)
+		#distance_matrix = Calculations.dist_mat(df,n_taxa, Calculations.msa)
 		print("Raw Distance Matrix:", distance_matrix)
-		
+		Calculations.draw_tree(n_taxa, distance_matrix)
+
+	# create the tree from the distance matrix and msa
+	def draw_tree(n_taxa, distance_matrix):
+		matrix_length = n_taxa
+		n_nodes = n_taxa + n_taxa - 2
 		# map matrix rows and columns to node indices
 		matrix_map = [n for n in range(n_taxa)]
 
-		# create the tree from the distance matrix and msa
 		tree = []
 		for i in range(n_nodes):
 			tree.append({})
