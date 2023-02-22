@@ -15,19 +15,19 @@ class App:
         self.frame.place(relwidth=.9,relheight=.9,relx=.05,rely=.05)
 
         #add title to frame
-        self.title=tk.Label(self.frame, text="Protein Sequence\nDistance Calculator",font= ("lucida 20 bold italic", 16))
-        self.title.place(x=230,y=30)
+        self.title=tk.Label(self.frame, text="Protein Sequence\nDistance Calculator",fg='orange',bg='white',font= ("lucida 20 bold italic", 18))
+        self.title.place(x=210,y=30)
 
         #add image
         self.pic=Image.open('capstone_image.jpg')
-        self.pic=self.pic.resize((200, 200))
+        self.pic=self.pic.resize((300, 300))
         self.pic=ImageTk.PhotoImage(self.pic)
         self.pic_win = tk.Label(root, image = self.pic)
-        self.pic_win.place(x=33,y=33)
+        self.pic_win.place(x=200,y=200)
 
         #select file button
-        self.file=tk.Button(self.frame,text="File Select",font= ("lucida 20 bold italic", 10),padx=20, pady=10, command = lambda:[Calculations.file_select(), enable_submit()])
-        self.file.place(x= 270,y=180)
+        self.file=tk.Button(self.frame,text="MSA File Select",font= ("lucida 20 bold italic", 9),padx=9, pady=5, command = lambda:[Calculations.file_select(), enable_submit()])
+        self.file.place(x= 170,y=500)
 
         '''#error popup window if wrong file is inputted
         def error_popup():
@@ -46,7 +46,7 @@ class App:
             self.path.place(x=75, y=275)'''
 
         #quit button
-        self.quit=tk.Button(self.frame, text="Quit App", font= ("lucida 20 bold italic", 10), padx=10, pady=10, command=root.destroy)
+        self.quit=tk.Button(self.frame, text="Quit App", font= ("lucida 20 bold italic", 10),padx=10, pady=10, command=root.quit)
         self.quit.place(x= 540,y=18)
 
         #drop-down menu for score matrix selection
@@ -59,7 +59,7 @@ class App:
         self.var = tk.StringVar()
         self.var.set('Choose a scoring matrix:') #default
         self.menu = tk.OptionMenu(self.frame, self.var, *matrices)
-        self.menu.place(x = 230, y = 350)
+        self.menu.place(x = 290, y = 500)
 
         #submit button
         self.submit = tk.Button(self.frame, text="Submit", font= ("lucida 20 bold italic", 8), padx=8, pady=5, command=lambda:[Calculations.matrix_selection(self.var.get()),Calculations.show_tree('./nj.tree')], state = 'disabled')
@@ -73,6 +73,8 @@ class App:
 
         
 root = Tk()
+root.title("Protein Sequence Distance Calculator")
 app = App(root)
+
 
 root.mainloop()
