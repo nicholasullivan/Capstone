@@ -26,7 +26,7 @@ class App:
         self.pic_win.place(x=200,y=200)
 
         #select file button
-        self.file=tk.Button(self.frame,text="MSA File Select",font= ("lucida 20 bold italic", 9),padx=9, pady=5, command = lambda:[Calculations.file_select(), enable_submit()])
+        self.file=tk.Button(self.frame, text = "MSA File Select", font= ("lucida 20 bold italic", 9), padx=9, pady=5, command=lambda:[Calculations.file_select(), enable_submit()])
         self.file.place(x= 170,y=500)
 
         '''#error popup window if wrong file is inputted
@@ -59,22 +59,18 @@ class App:
         self.var = tk.StringVar()
         self.var.set('Choose a scoring matrix:') #default
         self.menu = tk.OptionMenu(self.frame, self.var, *matrices)
-        self.menu.place(x = 290, y = 500)
+        self.menu.place(x=290, y=500)
 
         #submit button
-        self.submit = tk.Button(self.frame, text="Submit", font= ("lucida 20 bold italic", 8), padx=8, pady=5, command=lambda:[Calculations.matrix_selection(self.var.get()),Calculations.show_tree('./nj.tree')], state = 'disabled')
-        self.submit.place(x= 300,y=400)
-
-        
+        self.submit = tk.Button(self.frame, text="Submit", font= ("lucida 20 bold italic", 8), padx=25, pady=10, command=lambda:[Calculations.matrix_selection(self.var.get()),Calculations.show_tree('./nj.tree')], state = 'disabled')
+        self.submit.place(x=260, y=550)
         
         #function to enable button when file is selected
         def enable_submit():
             self.submit['state'] = 'normal'
-
         
 root = Tk()
 root.title("Protein Sequence Distance Calculator")
 app = App(root)
-
 
 root.mainloop()
