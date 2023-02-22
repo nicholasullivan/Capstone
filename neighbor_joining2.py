@@ -22,7 +22,8 @@ import numpy as np
 from tqdm import tqdm
 from tkinter import Tk     # from tkinter import Tk for Python 3.x
 from tkinter.filedialog import askopenfilename
-from Bio import SeqIO
+from Bio import SeqIO, Phylo
+import pylab
 
 warnings.simplefilter("ignore", DeprecationWarning)
 warnings.simplefilter("ignore", RuntimeWarning)
@@ -434,9 +435,20 @@ class Calculations:
 			matrix_map = new_matrix_map
 			matrix_length = matrix_length - 1
 
+		
+
 		# save the result
 		output_path = "nj.tree" 
-		def get_file():
-			return output_path
-		Calculations.write_tree(output_path, tree, Calculations.taxon_labels)
 		
+
+		
+		Calculations.write_tree(output_path, tree, Calculations.taxon_labels)
+
+	def show_tree(tree_file):
+		tree = Phylo.read(tree_file, 'newick')
+
+		# Plot the tree
+		Phylo.draw(tree)
+		pylab.show()
+		return
+	

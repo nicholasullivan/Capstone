@@ -62,8 +62,10 @@ class App:
         self.menu.place(x = 230, y = 350)
 
         #submit button
-        self.submit = tk.Button(self.frame, text="Submit", font= ("lucida 20 bold italic", 8), padx=8, pady=5, command=lambda:Calculations.matrix_selection(self.var.get()), state = 'disabled')
+        self.submit = tk.Button(self.frame, text="Submit", font= ("lucida 20 bold italic", 8), padx=8, pady=5, command=lambda:[Calculations.matrix_selection(self.var.get()),Calculations.show_tree('./nj.tree')], state = 'disabled')
         self.submit.place(x= 300,y=400)
+
+        
         
         #function to enable button when file is selected
         def enable_submit():
