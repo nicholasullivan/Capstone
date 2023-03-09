@@ -10,7 +10,7 @@ Download at: https://biopython.org/wiki/Download
 Authors- Troy Hofstrand, Nicholas Sullivan, and Nikolaus Ryczek
 Emails- troy.hofstrand@slu.edu, nicholas.sullivan@slu.edu, nikolaus.ryczek@slu.edu
 
-Last Date Updated- 2/22/2023
+Last Date Updated- 3/9/2023
 """
 import numpy
 import os
@@ -19,19 +19,17 @@ from collections import Counter
 import pandas as pd
 import itertools
 import numpy as np
-from tqdm import tqdm
 from tkinter import Tk     # from tkinter import Tk for Python 3.x
 from tkinter.filedialog import askopenfilename
 from Bio import SeqIO, Phylo
+from Bio.Phylo.Consensus import majority_consensus
 import pylab
 
 warnings.simplefilter("ignore", DeprecationWarning)
 warnings.simplefilter("ignore", RuntimeWarning)
 
 class Calculations:
-
-	#filename = ''
-	
+	'''
 	# A function to print out a matrix (e.g. a distance matrix) for human viewing
 	def print_matrix(title, matrix_map, matrix):
 		print(title + ":")
@@ -39,12 +37,12 @@ class Calculations:
 		for row_i, row in enumerate(matrix):
 			print("%2d" % (matrix_map[row_i]) + "".join(["%7.2f" % (element) for element in row]))
 		print("")
-
+	'''
 	# A function to write a tree to a file as a Newick-format string 
 	def write_tree(newick_path, tree, taxon_labels):
-		newick_string = Calculations.make_newick_string(len(tree) - 1, tree, taxon_labels) + ";"
+		newick_string = Calculations.make_newick_string(len(tree) - 1, tree, taxon_labels) + ";\n"
 
-		newick_file = open(newick_path, "w")
+		newick_file = open(newick_path, "a")
 		newick_file.write(newick_string)
 		newick_file.close()
 
@@ -126,6 +124,7 @@ class Calculations:
 
 	#calculating sigma(s1,s2) for every row and replacing with score
 
+
 	def randComboCalc(msa_1,msa_2,combs=False):
 		#REMOVE DOUBLE GAPS
 		gap_ind = [i for i, (g, s) in enumerate(zip(msa_1, msa_2)) if g==s==45]
@@ -139,42 +138,20 @@ class Calculations:
 		else:
 			return seq1,seq2
 
-	#Bootstrapping
-	def bootstrap(msa, n_taxa, sequence_length, df):
-		#create n versions of the trees by randomly selecting columns with replacement to recreate n new msa's
-		#What does majority consensus rule use to calculate the consensus? Distances?
-		#this function may have to be integrated into the main one at the bottom or to move some of that stuff up
-		cols = msa.T
-		n = 1
-		dist_mat = Calculations.dist_mat(df, n_taxa, msa)
-		#saved_dat = output step used to run consensus algorithm
-		for i in range(n-1):
-			#shuffle msa
-			idx = np.random.randint(sequence_length, size = sequence_length)
-			msa_new = cols[idx,:].T
-			#should I use the same scoring matrix here?
-			#calculate new distance matrix
-			dist_mat = Calculations.dist_mat(df, n_taxa, msa_new)
-			#update saved_dat
-		return dist_mat
-	
+
 # walkthrough of all equations to caluclate distance matrix from original Blosum/PAM matrix
 	def dist_mat(df,n_taxa,msa):
 		real = Calculations.realscore(df,n_taxa,msa)
 		rand = Calculations.randscore(df,n_taxa,msa)
 		norm_scores = np.subtract(real , rand)
-		print("Real score of first row:", real)
-		print("Rand score of first row:", rand[0])
-		print("Norm scores of first row:", norm_scores[0])
 		identity = Calculations.identityscore(n_taxa,real)
 		upper_norm = np.subtract(identity , rand)
-		print("Identity score first row:", identity[0])
-		print("Norm Upper Limit scores of first row:", upper_norm[0])
 		raw_dist = -np.log(np.divide(norm_scores, upper_norm))*100
-		print("Raw Distance from first sequence to all other sequences:", raw_dist[0])
 		#c =  
 		#distance_matrix = c * raw_dist
+		print("Distance Matrix:\n", raw_dist)
 		return raw_dist
+
 
 	def similarityscore(msa):
 		seq = 0
@@ -185,7 +162,6 @@ class Calculations:
 			seq1 = []
 			seq2 = []
 			if counter == len(msa):
-				#print('seq',seq)
 				seq += 1
 				counter = seq+1
 				if seq==len(msa)-1:
@@ -194,7 +170,7 @@ class Calculations:
 			msa_1 = msa[seq]
 			msa_2 = msa[counter]
 
-			#REMOVE DOUBLE GAPS , take length before or after???
+			#REMOVE DOUBLE GAPS, take length before or after???
 			gap_ind = [i for i, (g, s) in enumerate(zip(msa_1, msa_2)) if g==s==45]
 			seq1 = list(np.delete(msa_1,gap_ind))
 			seq2 = list(np.delete(msa_2,gap_ind))
@@ -203,9 +179,6 @@ class Calculations:
 				if seq1[n]==seq2[n]:
 					score+=1
 			sim_score=score/length
-			#print("seq "+str(seq))
-			#print("counter "+str(counter))
-			#print("score "+str(sim_score))
 			pair_scores.append(sim_score)
 			counter += 1
 		return sum(pair_scores)/len(pair_scores)
@@ -281,14 +254,17 @@ class Calculations:
 
 	#TODO:
 		#calibration factor?
+		#try other files Zheng sent us
 		#Method to pick Blosum and PAM matrix based on identity score
 			#BLOSUM - the average percent of the same score between each sequence
 			#PAM - ???
 		#Build end-to-end application
-			#quit running terminal when you quit the application
+			#quit running terminal when you press the X button
+			#have pop up that notifies user when and where the tree file was outputted
 			#error pop up when wrong file is inputted
-		#Bootstrap
-		#Test the program
+		#Find easier way to read in phylip - biopython?
+		#Test the program - how?
+		#should I use same scoring matrix for every bootstrapped msa?
 
 		# 65 - A, 82 - R, 78 - N, 68 - D, 67 - C, 81 - Q, 69 - E, 71 - G, 72 - H, 73 - I, 76 - L, 75 - K, 77 - M,
 		# 70 - F, 80 - P, 83 - S, 84 - T, 87 - W, 89 - Y, 86 - V, 45 - -
@@ -300,66 +276,49 @@ class Calculations:
 		'Select your desired phylip or fasta file:')
 		Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
 		filename = askopenfilename() # show an "Open" dialog box and return the path to the selected file
-		print(filename+ ' selected\n')
+		print(filename + ' selected\n')
 		file_type = os.path.splitext(filename)[1]
 		if file_type == ".fa":
 			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_fasta(filename)
 		elif file_type == ".phy":
 			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_phylip(filename)
 		else:
-			print('Incorrect file type selected. Please choose a Fasta(.fa) or Phylip(.phy) file.')
-			return
+			raise TypeError('Incorrect file type selected. Please choose a Fasta(.fa) or Phylip(.phy) file.')
 
-	def matrix_selection(value):
-		score=Calculations.similarityscore(Calculations.msa)
-		rounded = round(score*10)
+
+	def matrix_selection(value, n_bootstrap = 1):
+		score = Calculations.similarityscore(Calculations.msa)
+		rounded = round(score*10)*10
+		print('Rounded similarity score:', rounded)
 
 		if value == 'Auto-assign BLOSUM based on identity':
-			if rounded <=3:
+			if rounded <= 30:
 				arr = pd.read_csv('Matrices/BLOSUM30.csv', header=None).values
-				print("30")
-			if rounded==4:
-				arr = pd.read_csv('Matrices/BLOSUM40.csv', header=None).values
-				print("40")
-			if rounded==5:
-				arr = pd.read_csv('Matrices/BLOSUM50.csv', header=None).values
-				print("50")
-			if rounded==6:
-				arr = pd.read_csv('Matrices/BLOSUM62.csv', header=None).values
-				print("60")
-			if rounded==7:
-				arr = pd.read_csv('Matrices/BLOSUM70.csv', header=None).values
-				print("70")
-			if rounded==8:
-				arr = pd.read_csv('Matrices/BLOSUM80.csv', header=None).values
-				print("80")
-			if rounded==9:
-				arr = pd.read_csv('Matrices/BLOSUM90.csv', header=None).values
-				print("90")
-			if rounded>=10:
+			elif rounded >= 100:
 				arr = pd.read_csv('Matrices/BLOSUM100.csv', header=None).values
-				print("100")
+			else:
+				arr = pd.read_csv('Matrices/BLOSUM%s.csv'%score, header=None).values
 				
 		elif value == 'Auto-assign PAM based on identity':
-			if rounded==9:
+			if rounded >= 90:
 				arr = pd.read_csv('Matrices/PAM10.csv', header=None).values
-			if rounded==4:
+			elif rounded >= 40:
 				arr = pd.read_csv('Matrices/PAM100.csv', header=None).values
-			if rounded==3:
+			elif rounded == 30:
 				arr = pd.read_csv('Matrices/PAM200.csv', header=None).values
-			if rounded==2:
+			elif rounded == 20:
 				arr = pd.read_csv('Matrices/PAM300.csv', header=None).values
-			if rounded==10:
+			elif rounded == 10:
 				arr = pd.read_csv('Matrices/PAM400.csv', header=None).values
-			if rounded==10:
+			elif rounded == 0:
 				arr = pd.read_csv('Matrices/PAM500.csv', header=None).values
+
 		else:
 			file = 'Matrices/%s.csv'%value
 			arr = pd.read_csv(file, header=None).values
-		print(arr)
-		Calculations.calculate_dist(arr)
+		Calculations.calculate_consensus_tree(arr, n_bootstrap)
 	
-	def calculate_dist(score_mat):
+	def calculate_consensus_tree(score_mat, n_bootstrap):
 		# add penalty row and column of -2
 		with_pen = np.empty([21,21])
 		for i in range(len(score_mat)):	
@@ -370,14 +329,31 @@ class Calculations:
 		labs = 'ARNDCQEGHILKMFPSTWYV-' #missing letters #BZX
 		labels = numpy.fromstring(labs, dtype = "uint8") 
 		df = pd.DataFrame(with_pen, columns = labels, index = labels)
-		print(df)
+		print("Scoring Matrix:\n", df)
 
-		# calculate distance matrix
+		# bootstrapping
 		n_taxa = len(Calculations.taxon_labels)
-		distance_matrix = Calculations.bootstrap(Calculations.msa, n_taxa, Calculations.sequence_length, df)
-		#distance_matrix = Calculations.dist_mat(df,n_taxa, Calculations.msa)
-		print("Raw Distance Matrix:", distance_matrix)
-		Calculations.draw_tree(n_taxa, distance_matrix)
+		seq_length = Calculations.sequence_length
+		cols = Calculations.msa.T
+		newick_file = open("bootstrap.tree", "w")
+		newick_file.close()
+
+		# first copy with original msa
+		dist_mat = Calculations.dist_mat(df, n_taxa, Calculations.msa)
+		Calculations.draw_tree(n_taxa, dist_mat)
+
+		for i in range(n_bootstrap-1):
+			#shuffle msa
+			idx = np.random.randint(seq_length, size = seq_length)
+			msa_new = cols[idx,:].T
+			#should I use the same scoring matrix here?
+			#calculate new distance matrix
+			dist_mat = Calculations.dist_mat(df, n_taxa, msa_new)
+			Calculations.draw_tree(n_taxa, dist_mat)
+		
+		trees = list(Phylo.parse("bootstrap.tree", "newick"))
+		majority_tree = majority_consensus(trees)
+		Phylo.write(majority_tree, "nj.tree", "newick")
 
 	# create the tree from the distance matrix and msa
 	def draw_tree(n_taxa, distance_matrix):
@@ -435,20 +411,14 @@ class Calculations:
 			matrix_map = new_matrix_map
 			matrix_length = matrix_length - 1
 
-		
-
 		# save the result
-		output_path = "nj.tree" 
-		
-
-		
+		output_path = "bootstrap.tree"
 		Calculations.write_tree(output_path, tree, Calculations.taxon_labels)
 
+	# Plot the tree
 	def show_tree(tree_file):
 		tree = Phylo.read(tree_file, 'newick')
-
-		# Plot the tree
 		Phylo.draw(tree)
 		pylab.show()
+		print("Tree successfully displayed!")
 		return
-	
