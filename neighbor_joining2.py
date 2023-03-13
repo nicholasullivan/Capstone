@@ -79,7 +79,7 @@ class Calculations:
 
 		return(sequences, sequence_length, sequence_labels, msa)
 
-	def read_fasta(fasta_path,file_type):
+	def read_fasta(fasta_path):
 		
 		records = list(SeqIO.parse(fasta_path,'fasta'))
 		alignment = AlignIO.read(fasta_path, "fasta")
@@ -283,7 +283,7 @@ class Calculations:
 		if file_type == '.txt':
 			file_type = os.path.splitext(fileshort)[1]
 		if file_type == '.fasta' or file_type == '.fa' or file_type == '.fas' or file_type == ".muscle":
-			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_fasta(filename,file_type)
+			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_fasta(filename)
 		elif file_type == ".phy" or file_type == ".phylip":
 			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_phylip(filename)
 		else:
