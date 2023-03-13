@@ -71,7 +71,7 @@ class App:
 
         #submit button
         self.submit = tk.Button(self.frame, text="Submit", font= ("lucida 20 bold italic", 8), padx=8, pady=5,
-                                command=lambda:[Calculations.matrix_selection(self.var.get(), n.get()),Calculations.show_tree('./nj.tree')], state = 'disabled')
+                                command=lambda:[Calculations.matrix_selection(self.var.get(), n.get())], state = 'disabled')
         self.submit.place(x=290, y=560)
 
         #function to enable button when file is selected

@@ -12,18 +12,18 @@ Emails- troy.hofstrand@slu.edu, nicholas.sullivan@slu.edu, nikolaus.ryczek@slu.e
 
 Last Date Updated- 3/9/2023
 """
-import numpy
+
 import os
 import warnings
-from collections import Counter
 import pandas as pd
 import itertools
 import numpy as np
 from tkinter import Tk     # from tkinter import Tk for Python 3.x
 from tkinter.filedialog import askopenfilename
-from Bio import SeqIO, Phylo
+from Bio import SeqIO, Phylo, AlignIO
 from Bio.Phylo.Consensus import majority_consensus
-import pylab
+
+
 
 warnings.simplefilter("ignore", DeprecationWarning)
 warnings.simplefilter("ignore", RuntimeWarning)
@@ -61,29 +61,31 @@ class Calculations:
 
 	# Read in a PHYLIP-format multiple sequence alignment
 	def read_phylip(phylip_path):
-		phylip_file = open(phylip_path)
-		phylip_header = phylip_file.readline().strip().split()
-
-		n_taxa = int(phylip_header[0])
-		sequence_length = int(phylip_header[1])
-		sequences = []
-		sequence_labels = []
-		msa = numpy.zeros((n_taxa, sequence_length), dtype = "uint8")
-
-		for i in range(n_taxa):
-			line = phylip_file.readline()
-			label, sequence = line.strip().split()
-
-			sequence_labels.append(label)
-			msa[i] = numpy.fromstring(sequence, dtype = "uint8")
-			sequences.append(sequence)
-		return (sequences, sequence_length, sequence_labels, msa)
-
-	def read_fasta(fasta_path):
-		records = list(SeqIO.parse(fasta_path,'fasta'))
+		records = list(SeqIO.parse(phylip_path,'phylip'))
+		alignment = AlignIO.read(phylip_path, "phylip")
 
 		n_taxa = len(records)
-		sequence_length = len(records[0].seq)
+		sequence_length = alignment.get_alignment_length()
+		sequences = []
+		sequence_labels = []
+		msa = np.zeros((n_taxa, sequence_length), dtype = "uint8")
+
+		for i in range(n_taxa):
+			label = records[i].id
+			sequence = str(records[i].seq)
+			sequence_labels.append(label)
+			sequences.append(sequence)
+			msa[i] = np.fromstring(sequence, dtype = "uint8")
+
+		return(sequences, sequence_length, sequence_labels, msa)
+
+	def read_fasta(fasta_path,file_type):
+		
+		records = list(SeqIO.parse(fasta_path,'fasta'))
+		alignment = AlignIO.read(fasta_path, "fasta")
+
+		n_taxa = len(records)
+		sequence_length = alignment.get_alignment_length()
 		sequences = []
 		sequence_labels = []
 		msa = np.zeros((n_taxa, sequence_length), dtype = "uint8")
@@ -118,7 +120,7 @@ class Calculations:
 		for i in range(matrix_length):
 			for j in range(matrix_length):
 				if i != j:
-					q_matrix[i][j] -= numpy.sum(distance_matrix[i]) + numpy.sum(distance_matrix[j])
+					q_matrix[i][j] -= np.sum(distance_matrix[i]) + np.sum(distance_matrix[j])
 
 		return q_matrix
 
@@ -187,7 +189,7 @@ class Calculations:
 	def realscore(df,n_taxa,msa):
 		#make distance matrix of zeros
 		matrix_length = n_taxa
-		distance_matrix = numpy.zeros((matrix_length, matrix_length))
+		distance_matrix = np.zeros((matrix_length, matrix_length))
 		seq = 0
 		counter = 0
 
@@ -210,7 +212,7 @@ class Calculations:
 
 	# calculate random score between each sequence and add to random matrix
 	def randscore(df,n_taxa,msa):
-		distance_matrix = numpy.zeros((n_taxa, n_taxa))
+		distance_matrix = np.zeros((n_taxa, n_taxa))
 		seq = 0
 		counter = 0
 		while True:
@@ -243,7 +245,7 @@ class Calculations:
 	# calculate identity score of sequence pairs by taking average of each identity score with itself
 	def identityscore(n_taxa, reals):
 		scores = reals
-		matrix = numpy.zeros((n_taxa, n_taxa))
+		matrix = np.zeros((n_taxa, n_taxa))
 		i = 0
 		while i < (n_taxa):
 			for j in range(n_taxa):
@@ -277,10 +279,12 @@ class Calculations:
 		Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
 		filename = askopenfilename() # show an "Open" dialog box and return the path to the selected file
 		print(filename + ' selected\n')
-		file_type = os.path.splitext(filename)[1]
-		if file_type == ".fa":
-			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_fasta(filename)
-		elif file_type == ".phy":
+		fileshort, file_type = os.path.splitext(filename)
+		if file_type == '.txt':
+			file_type = os.path.splitext(fileshort)[1]
+		if file_type == '.fasta' or file_type == '.fa' or file_type == '.fas' or file_type == ".muscle":
+			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_fasta(filename,file_type)
+		elif file_type == ".phy" or file_type == ".phylip":
 			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_phylip(filename)
 		else:
 			raise TypeError('Incorrect file type selected. Please choose a Fasta(.fa) or Phylip(.phy) file.')
@@ -327,7 +331,7 @@ class Calculations:
 
 		# make scoring dataframe
 		labs = 'ARNDCQEGHILKMFPSTWYV-' #missing letters #BZX
-		labels = numpy.fromstring(labs, dtype = "uint8") 
+		labels = np.fromstring(labs, dtype = "uint8") 
 		df = pd.DataFrame(with_pen, columns = labels, index = labels)
 		print("Scoring Matrix:\n", df)
 
@@ -374,7 +378,7 @@ class Calculations:
 				f, g = Calculations.get_lowest_off_diagonal_value_coordinate(q_matrix) # these are the next nodes to branch off
 
 			fg_distance = distance_matrix[f][g]
-			f_length = 0.5 * fg_distance + (numpy.sum(distance_matrix[f]) - numpy.sum(distance_matrix[g])) / (2.0 * (matrix_length - 2))
+			f_length = 0.5 * fg_distance + (np.sum(distance_matrix[f]) - np.sum(distance_matrix[g])) / (2.0 * (matrix_length - 2))
 			g_length = fg_distance - f_length
 
 			# add the edges and branch lengths
@@ -386,7 +390,7 @@ class Calculations:
 				tree[u][matrix_map[2]] = distance_matrix[0][2] - f_length
 				break
 
-			new_distance_matrix = numpy.zeros((matrix_length - 1, matrix_length - 1))
+			new_distance_matrix = np.zeros((matrix_length - 1, matrix_length - 1))
 
 			# a and b are the old indices, i and j are the new indices
 			i = 0
@@ -414,11 +418,4 @@ class Calculations:
 		# save the result
 		output_path = "bootstrap.tree"
 		Calculations.write_tree(output_path, tree, Calculations.taxon_labels)
-
-	# Plot the tree
-	def show_tree(tree_file):
-		tree = Phylo.read(tree_file, 'newick')
-		Phylo.draw(tree)
-		pylab.show()
-		print("Tree successfully displayed!")
-		return
+		print(output_path + " file created!")
