@@ -247,15 +247,18 @@ class Calculations:
 
 
 	#TODO:
-		#make this all downloadable
-		#rename end result file
+		#make this all downloadable and get it to Dr. Zhang!
+		#rename end result file as INPUTFILENAME+BLOSUM/PAM+MATRIXNUM.tre?
+		#add which matrix was selected
+		#add Blosum 62 matrix select-auto
+		#pop-up with progress bar, sim score and matrix used, where final output is
+		#add secondary resulting txt file that shows information including input similarity score, matrix used, overall tree length, identity score, other info
 		
 		#Method to pick Blosum and PAM matrix based on identity score
 			#BLOSUM - the average percent of the same score between each sequence
 			#PAM - ???
 		#Build end-to-end application
 			#quit running terminal when you press the X button
-			#have pop up that notifies user when and where the tree file was outputted
 			#error pop up when wrong file is inputted
 
 
