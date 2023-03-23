@@ -19,7 +19,7 @@ class App:
         self.title.place(x=210,y=30)
 
         #add image
-        self.pic=Image.open('capstone_image.jpg')
+        self.pic=Image.open('assets/imgs/capstone_image.jpg')
         self.pic=self.pic.resize((300, 300))
         self.pic=ImageTk.PhotoImage(self.pic)
         self.pic_win = tk.Label(root, image = self.pic)
@@ -28,22 +28,6 @@ class App:
         #select file button
         self.file=tk.Button(self.frame, text = "MSA File Select", font= ("lucida 20 bold italic", 9), padx=9, pady=5, command=lambda:[Calculations.file_select(), enable_submit()])
         self.file.place(x= 170,y=460)
-
-        '''#error popup window if wrong file is inputted
-        def error_popup():
-            self.top = tk.Toplevel(self.frame)
-            self.top.geometry()
-            self.top.geometry("300x200")
-            self.top.title("File Type Error")
-            tk.Label(self.top, text= 
-                "Incompatible file type selected. Please choose a Phylip(.phy) or Fasta(.fa) msa file.",
-                font=('lucida 12')).place(x=100,y=100)
-
-        #file path printed
-        def print_path():
-            a = "File:" + str(Calculations.filename)
-            self.path = tk.Label(self.frame, text=a)
-            self.path.place(x=75, y=275)'''
 
         #quit button
         self.quit=tk.Button(self.frame, text="Quit App", font= ("lucida 20 bold italic", 10),padx=10, pady=10, command=root.quit)
