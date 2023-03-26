@@ -29,7 +29,7 @@ warnings.simplefilter("ignore", DeprecationWarning)
 warnings.simplefilter("ignore", RuntimeWarning)
 
 class Calculations:
-	
+	#fileName=""
 	# A function to write a tree to a file as a Newick-format string 
 	def write_tree(newick_path, tree, taxon_labels):
 		newick_string = Calculations.make_newick_string(len(tree) - 1, tree, taxon_labels) + ";\n"
@@ -268,6 +268,8 @@ class Calculations:
 
 	# Read in the multiple sequence alignment
 	def file_select():
+		global fileName
+		fileName=""
 		print('Hello!\n'
 		'Welcome to DNA similarity calculator!\n'
 		'Select your desired phylip or fasta file:')
@@ -283,9 +285,12 @@ class Calculations:
 			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_phylip(filename)
 		else:
 			raise TypeError('Incorrect file type selected. Please choose a Fasta(.fa) or Phylip(.phy) file.')
+		fileName=fileName+fileshort
+		print(fileName)
 
 
 	def matrix_selection(value, n_bootstrap = 1):
+		global fileName
 		score = Calculations.similarityscore(Calculations.msa)
 		rounded = round(score*10)*10
 		print('Rounded similarity score:', rounded)
@@ -293,31 +298,45 @@ class Calculations:
 		if value == 'Auto-assign BLOSUM based on identity':
 			if rounded <= 30:
 				arr = pd.read_csv('assets/matrices/BLOSUM30.csv', header=None).values
+				mat="BLOSUM30"
 			elif rounded >= 100:
 				arr = pd.read_csv('assets/matrices/BLOSUM100.csv', header=None).values
+				mat="BLOSUM100"
 			else:
-				arr = pd.read_csv('assets/matrices/BLOSUM%s.csv'%score, header=None).values
+				arr = pd.read_csv('assets/matrices/BLOSUM%s.csv'%rounded, header=None).values
+				mat="BLOSUM%s"%rounded
 				
 		elif value == 'Auto-assign PAM based on identity':
 			if rounded >= 90:
 				arr = pd.read_csv('assets/matrices/PAM10.csv', header=None).values
+				mat="PAM10"
 			elif rounded >= 40:
 				arr = pd.read_csv('assets/matrices/PAM100.csv', header=None).values
+				mat="PAM100"
 			elif rounded == 30:
 				arr = pd.read_csv('assets/matrices/PAM200.csv', header=None).values
+				mat="PAM200"
 			elif rounded == 20:
 				arr = pd.read_csv('assets/matrices/PAM300.csv', header=None).values
+				mat="PAM300"
 			elif rounded == 10:
 				arr = pd.read_csv('assets/matrices/PAM400.csv', header=None).values
+				mat="PAM400"
 			elif rounded == 0:
 				arr = pd.read_csv('assets/matrices/PAM500.csv', header=None).values
+				mat="PAM500"
 
 		else:
 			file = 'assets/matrices/%s.csv'%value
 			arr = pd.read_csv(file, header=None).values
+			mat=value
+		fileName=fileName+mat
+		print(fileName)
 		Calculations.calculate_consensus_tree(arr, n_bootstrap)
+		
 	
 	def calculate_consensus_tree(score_mat, n_bootstrap):
+		global fileName
 		# add penalty row and column of -2
 		with_pen = np.empty([21,21])
 		for i in range(len(score_mat)):	
@@ -334,7 +353,7 @@ class Calculations:
 		n_taxa = len(Calculations.taxon_labels)
 		seq_length = Calculations.sequence_length
 		cols = Calculations.msa.T
-		newick_file = open("bootstrap.tree", "w")
+		newick_file = open(fileName+"bootstraps.tre", "w")
 		newick_file.close()
 
 		# first copy with original msa
@@ -350,12 +369,13 @@ class Calculations:
 			dist_mat = Calculations.dist_mat(df, n_taxa, msa_new)
 			Calculations.draw_tree(n_taxa, dist_mat)
 		
-		trees = list(Phylo.parse("bootstrap.tree", "newick"))
+		trees = list(Phylo.parse(fileName+"bootstraps.tre", "newick"))
 		majority_tree = majority_consensus(trees)
-		Phylo.write(majority_tree, "nj.tree", "newick")
+		Phylo.write(majority_tree, fileName+"consensus.tre", "newick")
 
 	# create the tree from the distance matrix and msa
 	def draw_tree(n_taxa, distance_matrix):
+		global fileName
 		matrix_length = n_taxa
 		n_nodes = n_taxa + n_taxa - 2
 		# map matrix rows and columns to node indices
@@ -411,6 +431,6 @@ class Calculations:
 			matrix_length = matrix_length - 1
 
 		# save the result
-		output_path = "bootstrap.tree"
+		output_path = fileName+"bootstraps.tre"
 		Calculations.write_tree(output_path, tree, Calculations.taxon_labels)
 		print(output_path + " file created!")
