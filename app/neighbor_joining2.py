@@ -10,7 +10,7 @@ Download at: https://biopython.org/wiki/Download
 Authors- Troy Hofstrand, Nicholas Sullivan, and Nikolaus Ryczek
 Emails- troy.hofstrand@slu.edu, nicholas.sullivan@slu.edu, nikolaus.ryczek@slu.edu
 
-Last Date Updated- 3/9/2023
+Last Date Updated- 3/26/2023
 """
 
 import os
@@ -29,7 +29,6 @@ warnings.simplefilter("ignore", DeprecationWarning)
 warnings.simplefilter("ignore", RuntimeWarning)
 
 class Calculations:
-	#fileName=""
 	# A function to write a tree to a file as a Newick-format string 
 	def write_tree(newick_path, tree, taxon_labels):
 		newick_string = Calculations.make_newick_string(len(tree) - 1, tree, taxon_labels) + ";\n"
@@ -37,6 +36,7 @@ class Calculations:
 		newick_file = open(newick_path, "a")
 		newick_file.write(newick_string)
 		newick_file.close()
+		Calculations.summaryFile()
 
 	# Recursively build a Newick-format string from an adjacency list
 	def make_newick_string(node_i, tree, taxon_labels):
@@ -146,8 +146,8 @@ class Calculations:
 		print("Distance Matrix:\n", raw_dist)
 		return raw_dist
 
-
-	def similarityscore(msa):
+	#calcualtes the average identity score for the entire msa 
+	def msaIdentity(msa):
 		seq = 0
 		counter = 1
 		pair_scores=[]
@@ -248,15 +248,17 @@ class Calculations:
 
 	#TODO:
 		#make this all downloadable and get it to Dr. Zhang!
-		#rename end result file as INPUTFILENAME+BLOSUM/PAM+MATRIXNUM.tre?
-		#add which matrix was selected
-		#add Blosum 62 matrix select-auto
+		#rename end result file as INPUTFILENAME+BLOSUM/PAM+MATRIXNUM.tre?- done
+		#add which matrix was selected- done
+		#add Blosum 62 matrix select-auto- done
 		#pop-up with progress bar, sim score and matrix used, where final output is
-		#add secondary resulting txt file that shows information including input similarity score, matrix used, overall tree length, identity score, other info
+		#add secondary resulting txt file that shows summary info- just needs consensus total length
 		
 		#Method to pick Blosum and PAM matrix based on identity score
 			#BLOSUM - the average percent of the same score between each sequence
 			#PAM - ???
+			#BLOSUM62 selected when identity scores round to 60
+
 		#Build end-to-end application
 			#quit running terminal when you press the X button
 			#error pop up when wrong file is inputted
@@ -276,29 +278,33 @@ class Calculations:
 		Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
 		filename = askopenfilename() # show an "Open" dialog box and return the path to the selected file
 		print(filename + ' selected\n')
-		fileshort, file_type = os.path.splitext(filename)
+		Calculations.fileshort, file_type = os.path.splitext(filename)
 		if file_type == '.txt':
-			file_type = os.path.splitext(fileshort)[1]
+			file_type = os.path.splitext(Calculations.fileshort)[1]
 		if file_type == '.fasta' or file_type == '.fa' or file_type == '.fas':
 			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_fasta(filename)
 		elif file_type == ".phy" or file_type == ".phylip":
 			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_phylip(filename)
 		else:
 			raise TypeError('Incorrect file type selected. Please choose a Fasta(.fa) or Phylip(.phy) file.')
-		fileName=fileName+fileshort
+		fileName=fileName+Calculations.fileshort
 		print(fileName)
 
-
+	#picks the matrix automatically or based off the user's selection
 	def matrix_selection(value, n_bootstrap = 1):
 		global fileName
-		score = Calculations.similarityscore(Calculations.msa)
-		rounded = round(score*10)*10
+		global mat
+		Calculations.score = Calculations.msaIdentity(Calculations.msa)
+		rounded = round(Calculations.score*10)*10 #rounded so every score is in the tens (10,20,30,etc.), easier to compare to matrices
 		print('Rounded similarity score:', rounded)
 
 		if value == 'Auto-assign BLOSUM based on identity':
 			if rounded <= 30:
 				arr = pd.read_csv('assets/matrices/BLOSUM30.csv', header=None).values
 				mat="BLOSUM30"
+			elif rounded == 60:
+				arr = pd.read_csv('assets/matrices/BLOSUM62.csv', header=None).values
+				mat="BLOSUM62"
 			elif rounded >= 100:
 				arr = pd.read_csv('assets/matrices/BLOSUM100.csv', header=None).values
 				mat="BLOSUM100"
@@ -353,7 +359,7 @@ class Calculations:
 		n_taxa = len(Calculations.taxon_labels)
 		seq_length = Calculations.sequence_length
 		cols = Calculations.msa.T
-		newick_file = open(fileName+"bootstraps.tre", "w")
+		newick_file = open(fileName+"Bootstraps.tre", "w")
 		newick_file.close()
 
 		# first copy with original msa
@@ -369,9 +375,9 @@ class Calculations:
 			dist_mat = Calculations.dist_mat(df, n_taxa, msa_new)
 			Calculations.draw_tree(n_taxa, dist_mat)
 		
-		trees = list(Phylo.parse(fileName+"bootstraps.tre", "newick"))
+		trees = list(Phylo.parse(fileName+"Bootstraps.tre", "newick"))
 		majority_tree = majority_consensus(trees)
-		Phylo.write(majority_tree, fileName+"consensus.tre", "newick")
+		Phylo.write(majority_tree, fileName+"Consensus.tre", "newick")
 
 	# create the tree from the distance matrix and msa
 	def draw_tree(n_taxa, distance_matrix):
@@ -431,6 +437,15 @@ class Calculations:
 			matrix_length = matrix_length - 1
 
 		# save the result
-		output_path = fileName+"bootstraps.tre"
+		output_path = fileName+"Bootstraps.tre"
 		Calculations.write_tree(output_path, tree, Calculations.taxon_labels)
 		print(output_path + " file created!")
+
+	#writes a new file with al the important info about the tree that was created
+	def summaryFile():
+		global mat
+		file = open(Calculations.fileshort+"Summary.txt","w")
+		L = ["MSA file name: "+Calculations.fileshort+"\n","The matrix used: "+ mat+"\n",
+       "MSA identity percentage: "+round(Calculations.score,2)*100+ "\n","Total consensus tree length: "+ + "\n"]
+		file.writelines(L)
+		file.close()
