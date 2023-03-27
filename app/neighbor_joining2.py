@@ -22,7 +22,7 @@ from tkinter import Tk     # from tkinter import Tk for Python 3.x
 from tkinter.filedialog import askopenfilename
 from Bio import SeqIO, Phylo, AlignIO
 from Bio.Phylo.Consensus import majority_consensus
-
+import re
 
 
 warnings.simplefilter("ignore", DeprecationWarning)
@@ -247,22 +247,12 @@ class Calculations:
 
 
 	#TODO:
-		#make this all downloadable and get it to Dr. Zhang!
-		#rename end result file as INPUTFILENAME+BLOSUM/PAM+MATRIXNUM.tre?- done
-		#add which matrix was selected- done
-		#add Blosum 62 matrix select-auto- done
-		#pop-up with progress bar, sim score and matrix used, where final output is
-		#add secondary resulting txt file that shows summary info- just needs consensus total length
-		
-		#Method to pick Blosum and PAM matrix based on identity score
-			#BLOSUM - the average percent of the same score between each sequence
-			#PAM - ???
-			#BLOSUM62 selected when identity scores round to 60
-
+		#Make an executable
+		#Method to auto-pick PAM matrix based on identity score
 		#Build end-to-end application
 			#quit running terminal when you press the X button
+			#pop-up with progress bar
 			#error pop up when wrong file is inputted
-
 
 
 		# 65 - A, 82 - R, 78 - N, 68 - D, 67 - C, 81 - Q, 69 - E, 71 - G, 72 - H, 73 - I, 76 - L, 75 - K, 77 - M,
@@ -305,9 +295,6 @@ class Calculations:
 			elif rounded == 60:
 				arr = pd.read_csv('assets/matrices/BLOSUM62.csv', header=None).values
 				mat="BLOSUM62"
-			elif rounded >= 100:
-				arr = pd.read_csv('assets/matrices/BLOSUM100.csv', header=None).values
-				mat="BLOSUM100"
 			else:
 				arr = pd.read_csv('assets/matrices/BLOSUM%s.csv'%rounded, header=None).values
 				mat="BLOSUM%s"%rounded
@@ -379,6 +366,15 @@ class Calculations:
 		majority_tree = majority_consensus(trees)
 		Phylo.write(majority_tree, fileName+"Consensus.tre", "newick")
 
+		#get total distance of consensus tree and write it to summary file
+		newick_string = open(fileName+"Consensus.tre", "r").read()
+		distances = re.findall(r"(?<=:)[0-9]+(?:\.[0-9]+)?(?=[,);])", newick_string)
+		total_dist = sum([float(dist) for dist in distances])
+		file = open(Calculations.fileshort+"Summary.txt","a")
+		file.writelines(["Total consensus tree length: ", str(total_dist), "\n"])
+		file.close()
+
+
 	# create the tree from the distance matrix and msa
 	def draw_tree(n_taxa, distance_matrix):
 		global fileName
@@ -441,11 +437,11 @@ class Calculations:
 		Calculations.write_tree(output_path, tree, Calculations.taxon_labels)
 		print(output_path + " file created!")
 
-	#writes a new file with al the important info about the tree that was created
+	#writes a new file with all the important info about the tree that was created
 	def summaryFile():
 		global mat
 		file = open(Calculations.fileshort+"Summary.txt","w")
-		L = ["MSA file name: "+Calculations.fileshort+"\n","The matrix used: "+ mat+"\n",
-       "MSA identity percentage: "+round(Calculations.score,2)*100+ "\n","Total consensus tree length: "+ + "\n"]
+		L = ["MSA file name: ", Calculations.fileshort, "\n", "Score Matrix used: ", mat, "\n",
+       "MSA identity percentage: ", str(round(Calculations.score,2)*100), "\n"]
 		file.writelines(L)
 		file.close()
