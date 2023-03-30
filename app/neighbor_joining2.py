@@ -248,7 +248,13 @@ class Calculations:
 
 	#TODO:
 		#Make an executable
-		#Method to auto-pick PAM matrix based on identity score
+		#make a feature that does pairwise matrix selection:
+		#if three MSA's, get matrix for 1-2, 2-3, 1-3
+		#build a matrix based on this so 1 2 3
+				#					   1
+		 	#						   2
+		#							   3
+	
 		#Build end-to-end application
 			#quit running terminal when you press the X button
 			#pop-up with progress bar
@@ -298,26 +304,6 @@ class Calculations:
 			else:
 				arr = pd.read_csv('assets/matrices/BLOSUM%s.csv'%rounded, header=None).values
 				mat="BLOSUM%s"%rounded
-				
-		elif value == 'Auto-assign PAM based on identity':
-			if rounded >= 90:
-				arr = pd.read_csv('assets/matrices/PAM10.csv', header=None).values
-				mat="PAM10"
-			elif rounded >= 40:
-				arr = pd.read_csv('assets/matrices/PAM100.csv', header=None).values
-				mat="PAM100"
-			elif rounded == 30:
-				arr = pd.read_csv('assets/matrices/PAM200.csv', header=None).values
-				mat="PAM200"
-			elif rounded == 20:
-				arr = pd.read_csv('assets/matrices/PAM300.csv', header=None).values
-				mat="PAM300"
-			elif rounded == 10:
-				arr = pd.read_csv('assets/matrices/PAM400.csv', header=None).values
-				mat="PAM400"
-			elif rounded == 0:
-				arr = pd.read_csv('assets/matrices/PAM500.csv', header=None).values
-				mat="PAM500"
 
 		else:
 			file = 'assets/matrices/%s.csv'%value
@@ -442,6 +428,6 @@ class Calculations:
 		global mat
 		file = open(Calculations.fileshort+"Summary.txt","w")
 		L = ["MSA file name: ", Calculations.fileshort, "\n", "Score Matrix used: ", mat, "\n",
-       "MSA identity percentage: ", str(round(Calculations.score,2)*100), "\n"]
+       "MSA average identity percentage: ", str(round(Calculations.score,2)*100), "\n"]
 		file.writelines(L)
 		file.close()

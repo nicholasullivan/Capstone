@@ -35,8 +35,8 @@ class App:
 
         #drop-down menu for score matrix selection
         matrices = [
-            'Auto-assign BLOSUM based on identity','Auto-assign PAM based on identity',
-            'BLOSUM30','BLOSUM40','BLOSUM50','BLOSUM62','BLOSUM70','BLOSUM80','BLOSUM90','BLOSUM100',
+            'Auto-assign BLOSUM based on average identity score',
+            'BLOSUM30','BLOSUM40','BLOSUM50','BLOSUM62','BLOSUM70','BLOSUM80','BLOSUM90',
             'PAM10','PAM100','PAM200','PAM300','PAM400','PAM500'
         ]
 
@@ -45,7 +45,7 @@ class App:
         self.menu = tk.OptionMenu(self.frame, self.var, *matrices)
         self.menu.place(x=290, y=460)
 
-        #bootstrapping number of repititions n entry box
+        #bootstrapping number of repetitions n entry box
         n = tk.IntVar()
         n_lab = tk.Label(self.frame, text = 'N Bootstrap Reps', font=('lucida',10))
         n_entry = tk.Entry(self.frame, textvariable = n, font=('lucida',10))
