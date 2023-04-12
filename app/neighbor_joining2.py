@@ -145,7 +145,7 @@ class Calculations:
 		#distance_matrix = c * raw_dist
 		print("Distance Matrix:\n", raw_dist)
 		return raw_dist
-
+	
 	#calcualtes the average identity score for the entire msa 
 	def msaIdentity(msa):
 		seq = 0
@@ -164,7 +164,6 @@ class Calculations:
 			msa_1 = msa[seq]
 			msa_2 = msa[counter]
 
-			#REMOVE DOUBLE GAPS, take length before or after???
 			gap_ind = [i for i, (g, s) in enumerate(zip(msa_1, msa_2)) if g==s==45]
 			seq1 = list(np.delete(msa_1,gap_ind))
 			seq2 = list(np.delete(msa_2,gap_ind))
@@ -176,7 +175,105 @@ class Calculations:
 			pair_scores.append(sim_score)
 			counter += 1
 		return sum(pair_scores)/len(pair_scores)
+	
+	def dist_mat(df,n_taxa,msa):
+		real = Calculations.realscore(df,n_taxa,msa)
+		rand = Calculations.randscore(df,n_taxa,msa)
+		norm_scores = np.subtract(real , rand)
+		identity = Calculations.identityscore(n_taxa,real)
+		upper_norm = np.subtract(identity , rand)
+		raw_dist = -np.log(np.divide(norm_scores, upper_norm))*100
+		#c =  
+		#distance_matrix = c * raw_dist
+		print("Distance Matrix:\n", raw_dist)
+		return raw_dist
+	
+	def pairwise(msa,n_taxa):
+		distance_matrix = np.zeros((n_taxa, n_taxa))
+		seq = 0
+		counter = 0
 
+		#scoring matrix selection
+		while seq<len(msa):
+			score=0
+			seq1 = []
+			seq2 = []
+			if counter == len(msa):
+				seq += 1
+				counter = seq+1
+				if seq==len(msa)-1:
+					break
+
+			msa_1 = msa[seq]
+			msa_2 = msa[counter]
+
+			gap_ind = [i for i, (g, s) in enumerate(zip(msa_1, msa_2)) if g==s==45]
+			seq1 = list(np.delete(msa_1,gap_ind))
+			seq2 = list(np.delete(msa_2,gap_ind))
+			length=len(seq1)
+			for n in range(length):
+				if seq1[n]==seq2[n]:
+					score+=1
+			sim_score=score/length
+			sim_score=round(sim_score,1)*100
+			if sim_score<30:
+				sim_score=30
+			if sim_score>90:
+				sim_score=90
+			file = 'assets/matrices/BLOSUM%s.csv'%sim_score
+			scoreMat = pd.read_csv(file, header=None).values
+
+			#distance calculation equation
+			real=Calculations.realscoreP(scoreMat,seq,counter,msa)
+			rand=Calculations.randscoreP(scoreMat,seq,counter,msa)
+			identity=Calculations.identityscoreP(scoreMat,seq,counter)
+			norm_scores = np.subtract(real , rand)
+			upper_norm = np.subtract(identity , rand)
+			raw_dist = -np.log(np.divide(norm_scores, upper_norm))*100
+
+			#add to complete distance matrix
+			distance_matrix[seq][counter]=raw_dist
+			counter += 1
+		return 
+	
+	def realscoreP(df,n,m,msa):
+		real=0
+		seq1,seq2 = Calculations.randComboCalc(msa[n],msa[m],combs=False)
+		for j in range(len(seq1)):
+			res1 = seq1[j]
+			res2 = seq2[j]
+			comp = df[res1][res2] #find in score mat
+			real += comp #that score is spot in new_mat
+		return real
+
+	def randscoreP(df,n,m,msa):
+		rand_score=0
+		seq1 = []
+		seq2 = []
+
+		msa_1 = msa[n]
+		msa_2 = msa[m]
+
+		comb_list,seq1,seq2 = Calculations.randComboCalc(msa_1,msa_2,combs=True)
+
+		#Get scores for each combo
+		gap_count1 = seq1.count(45) #get num of gaps seq 1
+		gap_count2 = seq2.count(45)#get num of gaps seq 2
+		for val in comb_list:
+			comb_score = df[val[0]][val[1]] #find in score mat
+			num1_occ = seq1.count(val[0]) #count num occ of first val (in first seq)
+			num2_occ = seq2.count(val[1]) #count num occ of sec val (in sec seq)
+			rand_score += (comb_score*num1_occ*num2_occ)  
+		rand= (rand_score/len(seq1))- ((gap_count1+gap_count2)*2) #that score is spot in new_mat
+		return rand
+
+	def identityscoreP(df,n,m):
+		i = 0
+		while i < (n):
+			for j in range(m):
+				identity = (df[i,i] + df[j,j]) / 2 #NEEDS TO BE CHANGED USES ENTIRE REAL MATRIX FOR SEQ1 to SEQ1 COMPARISION
+			i += 1
+		return identity
 
 	def realscore(df,n_taxa,msa):
 		#make distance matrix of zeros
