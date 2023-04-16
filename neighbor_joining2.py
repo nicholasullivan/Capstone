@@ -216,25 +216,45 @@ class Calculations:
 					score+=1
 			sim_score=score/length
 			sim_score=round(sim_score,1)*100
+			sim_score=round(sim_score)
 			if sim_score<30:
 				sim_score=30
+			if sim_score==60:
+				sim_score=62
 			if sim_score>90:
-				sim_score=90
+				sim_score=90 #62?
 			file = 'assets/matrices/BLOSUM%s.csv'%sim_score
 			scoreMat = pd.read_csv(file, header=None).values
+			# add penalty row and column of -2
+			with_pen = np.empty([21,21])
+			for i in range(len(scoreMat)):	
+				with_pen[i] = np.append(scoreMat[i], [-2])
+			with_pen[20] = (np.repeat(-2.0, 21))
+
+			# make scoring dataframe
+			labs = 'ARNDCQEGHILKMFPSTWYV-' #missing letters #BZX
+			labels = np.fromstring(labs, dtype = "uint8") 
+			df = pd.DataFrame(with_pen, columns = labels, index = labels)
+			
 
 			#distance calculation equation
-			real=Calculations.realscoreP(scoreMat,seq,counter,msa)
-			rand=Calculations.randscoreP(scoreMat,seq,counter,msa)
-			identity=Calculations.identityscoreP(scoreMat,seq,counter)
-			norm_scores = np.subtract(real , rand)
-			upper_norm = np.subtract(identity , rand)
-			raw_dist = -np.log(np.divide(norm_scores, upper_norm))*100
+			real=Calculations.realscoreP(df,seq,counter,msa)
+			print('real:',real)
+			rand=Calculations.randscoreP(df,seq,counter,msa)
+			print('rand:',rand)
+			rand=round(rand,1)
+			identity=Calculations.identityscoreP(df,seq,counter,msa)
+			print('id:',identity)
+			norm_scores = real-rand
+			upper_norm = identity-rand
+			raw_dist = -np.log(norm_scores/upper_norm)*100
+			raw_dist=round(raw_dist,1)
+			print(raw_dist)
 
 			#add to complete distance matrix
 			distance_matrix[seq][counter]=raw_dist
 			counter += 1
-		return 
+		return distance_matrix
 	
 	def realscoreP(df,n,m,msa):
 		real=0
@@ -267,12 +287,15 @@ class Calculations:
 		rand= (rand_score/len(seq1))- ((gap_count1+gap_count2)*2) #that score is spot in new_mat
 		return rand
 
-	def identityscoreP(df,n,m):
-		i = 0
-		while i < (n):
-			for j in range(m):
-				identity = (df[i,i] + df[j,j]) / 2 #NEEDS TO BE CHANGED USES ENTIRE REAL MATRIX FOR SEQ1 to SEQ1 COMPARISION
-			i += 1
+	def identityscoreP(df,n,m,msa):
+		seq1=msa[n]
+		seq2=msa[m]
+		score=0
+		for i in seq1:
+			score+=df[i][i]
+		for i in seq2:
+			score+=df[i][i]
+		identity=score/2
 		return identity
 
 	def realscore(df,n_taxa,msa):
@@ -391,27 +414,49 @@ class Calculations:
 		rounded = round(Calculations.score*10)*10 #rounded so every score is in the tens (10,20,30,etc.), easier to compare to matrices
 		print('Rounded similarity score:', rounded)
 
-		if value == 'Auto-assign BLOSUM based on identity':
+		if value == 'Auto-assign BLOSUM based on identity' or 'Auto-assign BLOSUM based on pairwise identity score':
+			pair=False
+			if value == 'Auto-assign BLOSUM based on pairwise identity score':
+				fileName=fileName+'Pairwise'
+				pair=True
+
 			if rounded <= 30:
 				arr = pd.read_csv('assets/matrices/BLOSUM30.csv', header=None).values
 				mat="BLOSUM30"
+				fileName=fileName+mat
+				print(fileName)
+				
+
 			elif rounded == 60:
 				arr = pd.read_csv('assets/matrices/BLOSUM62.csv', header=None).values
 				mat="BLOSUM62"
+				fileName=fileName+mat
+				print(fileName)
+
+			elif rounded >=90:
+				arr = pd.read_csv('assets/matrices/BLOSUM90.csv', header=None).values
+				mat="BLOSUM90"
+				fileName=fileName+mat
+				print(fileName)
+
 			else:
 				arr = pd.read_csv('assets/matrices/BLOSUM%s.csv'%rounded, header=None).values
 				mat="BLOSUM%s"%rounded
-
+				fileName=fileName+mat
+				print(fileName)
+			
 		else:
 			file = 'assets/matrices/%s.csv'%value
 			arr = pd.read_csv(file, header=None).values
 			mat=value
-		fileName=fileName+mat
-		print(fileName)
-		Calculations.calculate_consensus_tree(arr, n_bootstrap)
+			fileName=fileName+mat
+			print(fileName)
+		Calculations.calculate_consensus_tree(arr, n_bootstrap,pair)
+		
+		
 		
 	
-	def calculate_consensus_tree(score_mat, n_bootstrap):
+	def calculate_consensus_tree(score_mat, n_bootstrap,pair):
 		global fileName
 		# add penalty row and column of -2
 		with_pen = np.empty([21,21])
@@ -433,7 +478,10 @@ class Calculations:
 		newick_file.close()
 
 		# first copy with original msa
-		dist_mat = Calculations.dist_mat(df, n_taxa, Calculations.msa)
+		if pair==False:
+			dist_mat = Calculations.dist_mat(df, n_taxa, Calculations.msa)
+		else:
+			dist_mat = Calculations.pairwise(Calculations.msa, n_taxa )
 		Calculations.draw_tree(n_taxa, dist_mat)
 
 		for i in range(n_bootstrap-1):
@@ -457,6 +505,54 @@ class Calculations:
 		file.writelines(["Total consensus tree length: ", str(total_dist), "\n"])
 		file.close()
 
+
+	def calculate_consensus_treeP(score_mat, n_bootstrap):
+		global fileName
+		
+		# add penalty row and column of -2
+		with_pen = np.empty([21,21])
+		for i in range(len(score_mat)):	
+			with_pen[i] = np.append(score_mat[i], [-2])
+		with_pen[20] = (np.repeat(-2.0, 21))
+
+		# make scoring dataframe
+		labs = 'ARNDCQEGHILKMFPSTWYV-' #missing letters #BZX
+		labels = np.fromstring(labs, dtype = "uint8") 
+		df = pd.DataFrame(with_pen, columns = labels, index = labels)
+		print("Scoring Matrix:\n", df)
+
+		# bootstrapping
+		n_taxa = len(Calculations.taxon_labels)
+		seq_length = Calculations.sequence_length
+		cols = Calculations.msa.T
+		newick_file = open(fileName+"Bootstraps.tre", "w")
+		newick_file.close()
+
+		print("up to dist")
+		# first copy with original msa
+		dist_mat = Calculations.pairwise(Calculations.msa, n_taxa)
+		Calculations.draw_tree(n_taxa, dist_mat)
+
+		for i in range(n_bootstrap-1):
+			#shuffle msa
+			idx = np.random.randint(seq_length, size = seq_length)
+			msa_new = cols[idx,:].T
+			#should I use the same scoring matrix here?
+			#calculate new distance matrix
+			dist_mat = Calculations.dist_mat(df, n_taxa, msa_new)
+			Calculations.draw_tree(n_taxa, dist_mat)
+		
+		trees = list(Phylo.parse(fileName+"Bootstraps.tre", "newick"))
+		majority_tree = majority_consensus(trees)
+		Phylo.write(majority_tree, fileName+"Consensus.tre", "newick")
+
+		#get total distance of consensus tree and write it to summary file
+		newick_string = open(fileName+"Consensus.tre", "r").read()
+		distances = re.findall(r"(?<=:)[0-9]+(?:\.[0-9]+)?(?=[,);])", newick_string)
+		total_dist = sum([float(dist) for dist in distances])
+		file = open(Calculations.fileshort+"Summary.txt","a")
+		file.writelines(["Total consensus tree length: ", str(total_dist), "\n"])
+		file.close()
 
 	# create the tree from the distance matrix and msa
 	def draw_tree(n_taxa, distance_matrix):
