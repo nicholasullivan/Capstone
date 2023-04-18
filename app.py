@@ -1,70 +1,109 @@
 import tkinter as tk
-from tkinter import filedialog, Text
-import os
-from neighbor_joining2 import *
+from tkinter import Tk
 from PIL import Image, ImageTk
+from neighbor_joining2 import Calculations
 
-class App:
+class Interface:
 
     def __init__( self, master):
         #create a canvas
-        self.canvas=tk.Canvas(root, height=700, width=700, background='orange')
+        self.canvas=tk.Canvas(root, height=650, width=700, background='#003DA5')
         self.canvas.pack()
         #create a frame
         self.frame= tk.Frame(root, background='white')
-        self.frame.place(relwidth=.9,relheight=.9,relx=.05,rely=.05)
+        self.frame.place(relwidth=.9,relheight=.85,relx=.05,rely=.03)
 
         #add title to frame
-        self.title=tk.Label(self.frame, text="Protein Sequence\nDistance Calculator",fg='orange',bg='white',font= ("lucida 20 bold italic", 18))
-        self.title.place(x=210,y=30)
+        self.title=tk.Label(self.frame, text="ProDisC",fg='#003DA5',bg='white',font=("Times New Roman", 30, "bold"))
+        self.title.place(x=80,y=35)
 
-        #add image
-        self.pic=Image.open('assets/imgs/capstone_image.jpg')
-        self.pic=self.pic.resize((300, 300))
-        self.pic=ImageTk.PhotoImage(self.pic)
-        self.pic_win = tk.Label(root, image = self.pic)
-        self.pic_win.place(x=200,y=170)
+        #add images
+        self.tree = Image.open('assets/imgs/free_tree.png')
+        width, height = self.tree.size
+        self.tree = self.tree.resize((round(width*0.17), round(height*0.17)))
+        self.tree = ImageTk.PhotoImage(self.tree)
+        self.tree_win = tk.Label(root, image = self.tree)
+        self.tree_win.place(x=350,y=40)
+
+        self.logo = Image.open('assets/imgs/logo.png')
+        width, height = self.logo.size
+        self.logo = self.logo.resize((round(width*.12), round(height*.12)))
+        self.logo = ImageTk.PhotoImage(self.logo)
+        self.logo_win = tk.Label(root, image = self.logo)
+        self.logo_win.place(x = round(700-width*.12)/2, y=585)
 
         #select file button
-        self.file=tk.Button(self.frame, text = "MSA File Select", font= ("lucida 20 bold italic", 9), padx=9, pady=5, command=lambda:[Calculations.file_select(), enable_submit()])
-        self.file.place(x= 170,y=460)
-
-        #quit button
-        self.quit=tk.Button(self.frame, text="Quit App", font= ("lucida 20 bold italic", 10),padx=10, pady=10, command=root.quit)
-        self.quit.place(x= 540,y=18)
+        file_lab = tk.Label(self.frame, text = 'Choose a Fasta or Phylip MSA file:', font=('lucida',10), background='white')
+        file_lab.place(x=30, y=110)
+        self.btn_text = tk.StringVar()
+        self.btn_text.set("Select File")
+        self.file_btn = tk.Button(self.frame, textvariable=self.btn_text, font=('lucida',10), padx=9, pady=5, command=lambda:[Calculations.file_select(), self.btn_text.set("File Selected")])
+        self.file_btn.place(x=30, y=140)
 
         #drop-down menu for score matrix selection
         matrices = [
-            'Auto-assign BLOSUM based on average identity score', 'Auto-assign BLOSUM based on pairwise identity score',
+            'Auto-assign BLOSUM based\n on average identity score', 'Auto-assign BLOSUM based\n on pairwise identity score',
             'BLOSUM30','BLOSUM40','BLOSUM50','BLOSUM62','BLOSUM70','BLOSUM80','BLOSUM90',
             'PAM10','PAM100','PAM200','PAM300','PAM400','PAM500'
         ]
         
-
-        self.var = tk.StringVar()
-        self.var.set('Choose a scoring matrix:') #default
-        self.menu = tk.OptionMenu(self.frame, self.var, *matrices)
-        self.menu.place(x=290, y=460)
+        mat_lab = tk.Label(self.frame, text = 'Choose a Scoring Matrix Option:', font=('lucida',10), background='white')
+        mat_lab.place(x=30, y=180)
+        self.mat = tk.StringVar()
+        self.mat.set('')
+        self.menu = tk.OptionMenu(self.frame, self.mat, *matrices)
+        self.menu.place(x=30, y=210)
 
         #bootstrapping number of repetitions n entry box
-        n = tk.IntVar()
-        n_lab = tk.Label(self.frame, text = 'N Bootstrap Reps', font=('lucida',10))
-        n_entry = tk.Entry(self.frame, textvariable = n, font=('lucida',10))
-        n.set(1)
-        n_lab.place(x=180, y=510)
-        n_entry.place(x=300, y=510)
+        boot_lab = tk.Label(self.frame, text = 'Enter N number of bootstrap repetitions:', font=('lucida',10), background='white')
+        boot_lab.place(x=30, y=260)
+        self.n = tk.IntVar()
+        n_entry = tk.Entry(self.frame, textvariable = self.n, font=('lucida',10))
+        #n.set(1)
+        n_entry.place(x=30, y=290)
 
-        #submit button
-        self.submit = tk.Button(self.frame, text="Submit", font= ("lucida 20 bold italic", 8), padx=8, pady=5,
-                                command=lambda:[Calculations.matrix_selection(self.var.get(), n.get())], state = 'disabled')
-        self.submit.place(x=290, y=560)
+        #function to enable Run button when prerequisites are met
+        self.file_warn = tk.Label(self.frame, text='No file was selected', font=('lucida',10), fg='white', bg='white')
+        self.mat_warn = tk.Label(self.frame, text='No scoring matrix option was selected', font=('lucida',10), fg='white', bg='white')
+        self.n_warn = tk.Label(self.frame, text='Number of bootstrap repititions must be more than 0', font=('lucida',10), fg='white', bg='white')
+        self.file_warn.place(x=30,y=380)
+        self.mat_warn.place(x=30,y=400)
+        self.n_warn.place(x=30,y=420)
+        
+        def check_readiness():
+            self.file_warn.config(fg='white')
+            self.mat_warn.config(fg='white')
+            self.n_warn.config(fg='white')
+            if (self.btn_text.get()=='File Selected') & (self.n.get() > 0) & (self.mat.get() != ''):
+                self.run['state'] = 'normal'
+            if self.btn_text.get()=='Select File':
+                self.file_warn.config(fg='red')
+            if self.mat.get()=='':
+                self.mat_warn.config(fg='red')
+            if self.n.get()<=0:
+                self.n_warn.config(fg='red')
 
-        #function to enable button when file is selected
-        def enable_submit():
-            self.submit['state'] = 'normal'
+        #submit buttons
+        self.check = tk.Button(self.frame, text='Check', font= ("lucida", 16), padx=6, pady=2, command=lambda:check_readiness())
+        self.run = tk.Button(self.frame, text="Run", font= ("lucida", 16), padx=10, pady=2,
+                                command=lambda:[Calculations.matrix_selection(self.mat.get(), self.n.get())], state = 'disabled')
+        self.check.place(x=40, y=330)
+        self.run.place(x=165, y=330)
+
+        #create and update progress label
+        self.progress = tk.StringVar()
+        self.prg_lab = tk.Label(self.frame, textvariable=self.progress, font=('lucida',10), fg='green', bg='white')
+        
+    '''def update_progress(self, n, total_n):
+        self.progress.set('Progress: Bootstrap', n, 'of', total_n, 'calculated')
+        self.prg_lab.place(x=30, y=450)
+    def completed(self):
+        self.progress.set('Consensus tree successfully created. Check your files!')
+        self.prg_lab.place(x=30, y=450)'''
         
 root = Tk()
 root.title("Protein Sequence Distance Calculator")
-app = App(root)
+app = Interface(root)
 
+root.protocol("WM_DELETE_WINDOW", root.quit)
 root.mainloop()

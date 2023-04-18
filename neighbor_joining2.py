@@ -10,7 +10,7 @@ Download at: https://biopython.org/wiki/Download
 Authors- Troy Hofstrand, Nicholas Sullivan, and Nikolaus Ryczek
 Emails- troy.hofstrand@slu.edu, nicholas.sullivan@slu.edu, nikolaus.ryczek@slu.edu
 
-Last Date Updated- 3/26/2023
+Last Date Updated- 4/18/2023
 """
 
 import os
@@ -71,8 +71,8 @@ class Calculations:
 
 		return(sequences, sequence_length, sequence_labels, msa)
 
+	# Read in a FASTA-format multiple sequence alignment
 	def read_fasta(fasta_path):
-		
 		records = list(SeqIO.parse(fasta_path,'fasta'))
 		alignment = AlignIO.read(fasta_path, "fasta")
 
@@ -116,9 +116,6 @@ class Calculations:
 
 		return q_matrix
 
-	#calculating sigma(s1,s2) for every row and replacing with score
-
-
 	def randComboCalc(msa_1,msa_2,combs=False):
 		#REMOVE DOUBLE GAPS
 		gap_ind = [i for i, (g, s) in enumerate(zip(msa_1, msa_2)) if g==s==45]
@@ -146,7 +143,7 @@ class Calculations:
 		print("Distance Matrix:\n", raw_dist)
 		return raw_dist
 	
-	#calcualtes the average identity score for the entire msa 
+	#calculates the average identity score for the entire msa 
 	def msaIdentity(msa):
 		seq = 0
 		counter = 1
@@ -376,7 +373,6 @@ class Calculations:
 		#							   3
 	
 		#Build end-to-end application
-			#quit running terminal when you press the X button
 			#pop-up with progress bar
 			#error pop up when wrong file is inputted
 
@@ -403,6 +399,7 @@ class Calculations:
 			Calculations.sequences, Calculations.sequence_length, Calculations.taxon_labels, Calculations.msa = Calculations.read_phylip(filename)
 		else:
 			raise TypeError('Incorrect file type selected. Please choose a Fasta(.fa) or Phylip(.phy) file.')
+			#tell app of error
 		fileName=fileName+Calculations.fileshort
 		print(fileName)
 
@@ -414,9 +411,9 @@ class Calculations:
 		rounded = round(Calculations.score*10)*10 #rounded so every score is in the tens (10,20,30,etc.), easier to compare to matrices
 		print('Rounded similarity score:', rounded)
 
-		if value == 'Auto-assign BLOSUM based on identity' or 'Auto-assign BLOSUM based on pairwise identity score':
+		if value == 'Auto-assign BLOSUM based on average identity' or 'Auto-assign BLOSUM based on pairwise identity':
 			pair=False
-			if value == 'Auto-assign BLOSUM based on pairwise identity score':
+			if value == 'Auto-assign BLOSUM based on pairwise identity':
 				fileName=fileName+'Pairwise'
 				pair=True
 
@@ -453,8 +450,6 @@ class Calculations:
 			print(fileName)
 		Calculations.calculate_consensus_tree(arr, n_bootstrap,pair)
 		
-		
-		
 	
 	def calculate_consensus_tree(score_mat, n_bootstrap,pair):
 		global fileName
@@ -483,15 +478,16 @@ class Calculations:
 		else:
 			dist_mat = Calculations.pairwise(Calculations.msa, n_taxa )
 		Calculations.draw_tree(n_taxa, dist_mat)
+		#app.update_progress(1, n_bootstrap)
 
 		for i in range(n_bootstrap-1):
 			#shuffle msa
 			idx = np.random.randint(seq_length, size = seq_length)
 			msa_new = cols[idx,:].T
-			#should I use the same scoring matrix here?
 			#calculate new distance matrix
 			dist_mat = Calculations.dist_mat(df, n_taxa, msa_new)
 			Calculations.draw_tree(n_taxa, dist_mat)
+			#app.update_progress(i+2, n_bootstrap)
 		
 		trees = list(Phylo.parse(fileName+"Bootstraps.tre", "newick"))
 		majority_tree = majority_consensus(trees)
@@ -504,7 +500,7 @@ class Calculations:
 		file = open(Calculations.fileshort+"Summary.txt","a")
 		file.writelines(["Total consensus tree length: ", str(total_dist), "\n"])
 		file.close()
-
+		#app.completed()
 
 	def calculate_consensus_treeP(score_mat, n_bootstrap):
 		global fileName
