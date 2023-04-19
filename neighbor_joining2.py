@@ -404,7 +404,7 @@ class Calculations:
 		print(fileName)
 
 	#picks the matrix automatically or based off the user's selection
-	def matrix_selection(value, n_bootstrap = 1):
+	def matrix_selection(value, gap,n_bootstrap = 1):
 		global fileName
 		global mat
 		Calculations.score = Calculations.msaIdentity(Calculations.msa)
@@ -448,16 +448,17 @@ class Calculations:
 			mat=value
 			fileName=fileName+mat
 			print(fileName)
-		Calculations.calculate_consensus_tree(arr, n_bootstrap,pair)
+		Calculations.calculate_consensus_tree(arr,gap, n_bootstrap,pair)
 		
 	
-	def calculate_consensus_tree(score_mat, n_bootstrap,pair):
+	def calculate_consensus_tree(score_mat,gap, n_bootstrap,pair):
 		global fileName
-		# add penalty row and column of -2
+		# add penalty row based on user selection
+		gap=int(gap)
 		with_pen = np.empty([21,21])
 		for i in range(len(score_mat)):	
-			with_pen[i] = np.append(score_mat[i], [-2])
-		with_pen[20] = (np.repeat(-2.0, 21))
+			with_pen[i] = np.append(score_mat[i], [gap])
+		with_pen[20] = (np.repeat(gap, 21))
 
 		# make scoring dataframe
 		labs = 'ARNDCQEGHILKMFPSTWYV-' #missing letters #BZX
@@ -501,54 +502,6 @@ class Calculations:
 		file.writelines(["Total consensus tree length: ", str(total_dist), "\n"])
 		file.close()
 		#app.completed()
-
-	def calculate_consensus_treeP(score_mat, n_bootstrap):
-		global fileName
-		
-		# add penalty row and column of -2
-		with_pen = np.empty([21,21])
-		for i in range(len(score_mat)):	
-			with_pen[i] = np.append(score_mat[i], [-2])
-		with_pen[20] = (np.repeat(-2.0, 21))
-
-		# make scoring dataframe
-		labs = 'ARNDCQEGHILKMFPSTWYV-' #missing letters #BZX
-		labels = np.fromstring(labs, dtype = "uint8") 
-		df = pd.DataFrame(with_pen, columns = labels, index = labels)
-		print("Scoring Matrix:\n", df)
-
-		# bootstrapping
-		n_taxa = len(Calculations.taxon_labels)
-		seq_length = Calculations.sequence_length
-		cols = Calculations.msa.T
-		newick_file = open(fileName+"Bootstraps.tre", "w")
-		newick_file.close()
-
-		print("up to dist")
-		# first copy with original msa
-		dist_mat = Calculations.pairwise(Calculations.msa, n_taxa)
-		Calculations.draw_tree(n_taxa, dist_mat)
-
-		for i in range(n_bootstrap-1):
-			#shuffle msa
-			idx = np.random.randint(seq_length, size = seq_length)
-			msa_new = cols[idx,:].T
-			#should I use the same scoring matrix here?
-			#calculate new distance matrix
-			dist_mat = Calculations.dist_mat(df, n_taxa, msa_new)
-			Calculations.draw_tree(n_taxa, dist_mat)
-		
-		trees = list(Phylo.parse(fileName+"Bootstraps.tre", "newick"))
-		majority_tree = majority_consensus(trees)
-		Phylo.write(majority_tree, fileName+"Consensus.tre", "newick")
-
-		#get total distance of consensus tree and write it to summary file
-		newick_string = open(fileName+"Consensus.tre", "r").read()
-		distances = re.findall(r"(?<=:)[0-9]+(?:\.[0-9]+)?(?=[,);])", newick_string)
-		total_dist = sum([float(dist) for dist in distances])
-		file = open(Calculations.fileshort+"Summary.txt","a")
-		file.writelines(["Total consensus tree length: ", str(total_dist), "\n"])
-		file.close()
 
 	# create the tree from the distance matrix and msa
 	def draw_tree(n_taxa, distance_matrix):

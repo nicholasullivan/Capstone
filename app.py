@@ -54,25 +54,39 @@ class Interface:
         self.menu = tk.OptionMenu(self.frame, self.mat, *matrices)
         self.menu.place(x=30, y=210)
 
+        #drop-down menu for gap penalty selection
+        pens = [
+            '-1','-2','-3','-4'
+        ]
+        gap_lab = tk.Label(self.frame, text = 'Choose a Gap Penalty:', font=('lucida',10), background='white')
+        gap_lab.place(x=30, y=260)
+        self.gap = tk.StringVar()
+        self.gap.set('')
+        self.menu = tk.OptionMenu(self.frame, self.gap, *pens)
+        self.menu.place(x=30, y=290)
+
         #bootstrapping number of repetitions n entry box
         boot_lab = tk.Label(self.frame, text = 'Enter N number of bootstrap repetitions:', font=('lucida',10), background='white')
-        boot_lab.place(x=30, y=260)
+        boot_lab.place(x=30, y=320)
         self.n = tk.IntVar()
         n_entry = tk.Entry(self.frame, textvariable = self.n, font=('lucida',10))
         #n.set(1)
-        n_entry.place(x=30, y=290)
+        n_entry.place(x=30, y=350)
 
         #function to enable Run button when prerequisites are met
         self.file_warn = tk.Label(self.frame, text='No file was selected', font=('lucida',10), fg='white', bg='white')
         self.mat_warn = tk.Label(self.frame, text='No scoring matrix option was selected', font=('lucida',10), fg='white', bg='white')
-        self.n_warn = tk.Label(self.frame, text='Number of bootstrap repititions must be more than 0', font=('lucida',10), fg='white', bg='white')
-        self.file_warn.place(x=30,y=380)
-        self.mat_warn.place(x=30,y=400)
-        self.n_warn.place(x=30,y=420)
+        self.gap_warn = tk.Label(self.frame, text='No gap penalty was selected', font=('lucida',10), fg='white', bg='white')
+        self.n_warn = tk.Label(self.frame, text='Number of bootstrap repititions must be greater than zero', font=('lucida',10), fg='white', bg='white')
+        self.file_warn.place(x=30,y=430)
+        self.mat_warn.place(x=30,y=450)
+        self.gap_warn.place(x=30,y=470)
+        self.n_warn.place(x=30,y=490)
         
         def check_readiness():
             self.file_warn.config(fg='white')
             self.mat_warn.config(fg='white')
+            self.gap_warn.config(fg='white')
             self.n_warn.config(fg='white')
             if (self.btn_text.get()=='File Selected') & (self.n.get() > 0) & (self.mat.get() != ''):
                 self.run['state'] = 'normal'
@@ -80,15 +94,17 @@ class Interface:
                 self.file_warn.config(fg='red')
             if self.mat.get()=='':
                 self.mat_warn.config(fg='red')
+            if self.gap.get()=='':
+                self.gap_warn.config(fg='red')
             if self.n.get()<=0:
                 self.n_warn.config(fg='red')
 
         #submit buttons
         self.check = tk.Button(self.frame, text='Check', font= ("lucida", 16), padx=6, pady=2, command=lambda:check_readiness())
         self.run = tk.Button(self.frame, text="Run", font= ("lucida", 16), padx=10, pady=2,
-                                command=lambda:[Calculations.matrix_selection(self.mat.get(), self.n.get())], state = 'disabled')
-        self.check.place(x=40, y=330)
-        self.run.place(x=165, y=330)
+                                command=lambda:[Calculations.matrix_selection(self.mat.get(), self.gap.get(),self.n.get())], state = 'disabled')
+        self.check.place(x=40, y=380)
+        self.run.place(x=165, y=380)
 
         #create and update progress label
         self.progress = tk.StringVar()
