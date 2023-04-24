@@ -4,13 +4,14 @@ phylip (PHY) or fasta (FA) format and choose the scoring matrix they want. The s
 the choosen scoring matrix, go through a neighbor joining and tree building process, and, finally, results are
 confirmed via boostrapping.
 
-Several packages may need to be downloaded on computer. One of these is the Bio package.
-Download at: https://biopython.org/wiki/Download
+Several packages may need to be downloaded on computer based on your current computer packages.
+One of these is the Bio package.
+Download directions at: https://biopython.org/wiki/Download
 
 Authors- Troy Hofstrand, Nicholas Sullivan, and Nikolaus Ryczek
 Emails- troy.hofstrand@slu.edu, nicholas.sullivan@slu.edu, nikolaus.ryczek@slu.edu
 
-Last Date Updated- 4/18/2023
+Last Date Updated- 4/24/2023
 """
 
 import os
@@ -362,23 +363,11 @@ class Calculations:
 			i += 1
 		return matrix
 
-
-	#TODO:
-		#Make an executable
-		#make a feature that does pairwise matrix selection:
-		#if three MSA's, get matrix for 1-2, 2-3, 1-3
-		#build a matrix based on this so 1 2 3
-				#					   1
-		 	#						   2
-		#							   3
-	
-		#Build end-to-end application
-			#pop-up with progress bar
-			#error pop up when wrong file is inputted
-
-
-		# 65 - A, 82 - R, 78 - N, 68 - D, 67 - C, 81 - Q, 69 - E, 71 - G, 72 - H, 73 - I, 76 - L, 75 - K, 77 - M,
-		# 70 - F, 80 - P, 83 - S, 84 - T, 87 - W, 89 - Y, 86 - V, 45 - -
+		'''
+		KEY:
+		65 - A, 82 - R, 78 - N, 68 - D, 67 - C, 81 - Q, 69 - E, 71 - G, 72 - H, 73 - I, 76 - L, 75 - K, 77 - M,
+		70 - F, 80 - P, 83 - S, 84 - T, 87 - W, 89 - Y, 86 - V, 45 - -
+		'''
 
 	# Read in the multiple sequence alignment
 	def file_select():
@@ -481,7 +470,6 @@ class Calculations:
 		else:
 			dist_mat = Calculations.pairwise(Calculations.msa, n_taxa )
 		Calculations.draw_tree(n_taxa, dist_mat)
-		#app.update_progress(1, n_bootstrap)
 
 		for i in range(n_bootstrap-1):
 			#shuffle msa
@@ -490,7 +478,6 @@ class Calculations:
 			#calculate new distance matrix
 			dist_mat = Calculations.dist_mat(df, n_taxa, msa_new)
 			Calculations.draw_tree(n_taxa, dist_mat)
-			#app.update_progress(i+2, n_bootstrap)
 		
 		trees = list(Phylo.parse(fileNameF+"Bootstraps.tre", "newick"))
 		majority_tree = majority_consensus(trees)
@@ -503,7 +490,6 @@ class Calculations:
 		file = open(Calculations.fileshort+"Summary.txt","a")
 		file.writelines(["Total consensus tree length: ", str(total_dist), "\n"])
 		file.close()
-		#app.completed()
 
 	# create the tree from the distance matrix and msa
 	def draw_tree(n_taxa, distance_matrix):
