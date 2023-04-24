@@ -38,6 +38,7 @@ class Interface:
         self.btn_text = tk.StringVar()
         self.btn_text.set("Select File")
         self.file_btn = tk.Button(self.frame, textvariable=self.btn_text, font=('lucida',10), padx=9, pady=5, command=lambda:[Calculations.file_select(), self.btn_text.set("File Selected")])
+        
         self.file_btn.place(x=30, y=140)
 
         #drop-down menu for score matrix selection
@@ -99,10 +100,16 @@ class Interface:
             if self.n.get()<=0:
                 self.n_warn.config(fg='red')
 
+        def popup(tf):
+            while tf==True:
+                if Calculations.complete()==True:
+                    tk.messagebox.showinfo(title="Calculation Complete!", message="The new files should be in your downloads.")
+                break
+
         #submit buttons
         self.check = tk.Button(self.frame, text='Check', font= ("lucida", 16), padx=6, pady=2, command=lambda:check_readiness())
         self.run = tk.Button(self.frame, text="Run", font= ("lucida", 16), padx=10, pady=2,
-                                command=lambda:[Calculations.matrix_selection(self.mat.get(), self.gap.get(),self.n.get())], state = 'disabled')
+                                command=lambda:[Calculations.matrix_selection(self.mat.get(), self.gap.get(),self.n.get()),popup(True)], state = 'disabled')
         self.check.place(x=40, y=380)
         self.run.place(x=165, y=380)
 

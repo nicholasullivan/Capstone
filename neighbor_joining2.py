@@ -407,52 +407,54 @@ class Calculations:
 	def matrix_selection(value, gap,n_bootstrap = 1):
 		global fileName
 		global mat
+		global fileNameF
 		Calculations.score = Calculations.msaIdentity(Calculations.msa)
 		rounded = round(Calculations.score*10)*10 #rounded so every score is in the tens (10,20,30,etc.), easier to compare to matrices
 		print('Rounded similarity score:', rounded)
 
-		if value == 'Auto-assign BLOSUM based on average identity' or 'Auto-assign BLOSUM based on pairwise identity':
+		if value == 'Auto-assign BLOSUM based\n on average identity score' or value == 'Auto-assign BLOSUM based\n on pairwise identity score':
 			pair=False
-			if value == 'Auto-assign BLOSUM based on pairwise identity':
-				fileName=fileName+'Pairwise'
+			if value == 'Auto-assign BLOSUM based\n on pairwise identity score':
+				fileNameF=fileName+'Pairwise'
+				print(fileNameF+'Pairwise')
 				pair=True
 
 			if rounded <= 30:
 				arr = pd.read_csv('assets/matrices/BLOSUM30.csv', header=None).values
 				mat="BLOSUM30"
-				fileName=fileName+mat
-				print(fileName)
+				fileNameF=fileName+mat
+				print(fileNameF)
 				
 
 			elif rounded == 60:
 				arr = pd.read_csv('assets/matrices/BLOSUM62.csv', header=None).values
 				mat="BLOSUM62"
-				fileName=fileName+mat
-				print(fileName)
+				fileNameF=fileName+mat
+				print(fileNameF)
 
 			elif rounded >=90:
 				arr = pd.read_csv('assets/matrices/BLOSUM90.csv', header=None).values
 				mat="BLOSUM90"
-				fileName=fileName+mat
-				print(fileName)
+				fileNameF=fileName+mat
+				print(fileNameF)
 
 			else:
 				arr = pd.read_csv('assets/matrices/BLOSUM%s.csv'%rounded, header=None).values
 				mat="BLOSUM%s"%rounded
-				fileName=fileName+mat
-				print(fileName)
+				fileNameF=fileName+mat
+				print(fileNameF)
 			
 		else:
 			file = 'assets/matrices/%s.csv'%value
 			arr = pd.read_csv(file, header=None).values
 			mat=value
-			fileName=fileName+mat
-			print(fileName)
+			fileNameF=fileName+mat
+			print(fileNameF)
 		Calculations.calculate_consensus_tree(arr,gap, n_bootstrap,pair)
 		
 	
 	def calculate_consensus_tree(score_mat,gap, n_bootstrap,pair):
-		global fileName
+		global fileNameF
 		# add penalty row based on user selection
 		gap=int(gap)
 		with_pen = np.empty([21,21])
@@ -470,7 +472,7 @@ class Calculations:
 		n_taxa = len(Calculations.taxon_labels)
 		seq_length = Calculations.sequence_length
 		cols = Calculations.msa.T
-		newick_file = open(fileName+"Bootstraps.tre", "w")
+		newick_file = open(fileNameF+"Bootstraps.tre", "w")
 		newick_file.close()
 
 		# first copy with original msa
@@ -490,12 +492,12 @@ class Calculations:
 			Calculations.draw_tree(n_taxa, dist_mat)
 			#app.update_progress(i+2, n_bootstrap)
 		
-		trees = list(Phylo.parse(fileName+"Bootstraps.tre", "newick"))
+		trees = list(Phylo.parse(fileNameF+"Bootstraps.tre", "newick"))
 		majority_tree = majority_consensus(trees)
-		Phylo.write(majority_tree, fileName+"Consensus.tre", "newick")
+		Phylo.write(majority_tree, fileNameF+"Consensus.tre", "newick")
 
 		#get total distance of consensus tree and write it to summary file
-		newick_string = open(fileName+"Consensus.tre", "r").read()
+		newick_string = open(fileNameF+"Consensus.tre", "r").read()
 		distances = re.findall(r"(?<=:)[0-9]+(?:\.[0-9]+)?(?=[,);])", newick_string)
 		total_dist = sum([float(dist) for dist in distances])
 		file = open(Calculations.fileshort+"Summary.txt","a")
@@ -505,7 +507,7 @@ class Calculations:
 
 	# create the tree from the distance matrix and msa
 	def draw_tree(n_taxa, distance_matrix):
-		global fileName
+		global fileNameF
 		matrix_length = n_taxa
 		n_nodes = n_taxa + n_taxa - 2
 		# map matrix rows and columns to node indices
@@ -561,7 +563,7 @@ class Calculations:
 			matrix_length = matrix_length - 1
 
 		# save the result
-		output_path = fileName+"Bootstraps.tre"
+		output_path = fileNameF+"Bootstraps.tre"
 		Calculations.write_tree(output_path, tree, Calculations.taxon_labels)
 		print(output_path + " file created!")
 
@@ -573,3 +575,7 @@ class Calculations:
        "MSA average identity percentage: ", str(round(Calculations.score,2)*100), "\n"]
 		file.writelines(L)
 		file.close()
+		Calculations.complete()
+
+	def complete():
+		return True
