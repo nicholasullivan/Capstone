@@ -252,6 +252,7 @@ class Calculations:
 			#add to complete distance matrix
 			distance_matrix[seq][counter]=raw_dist
 			counter += 1
+		print(distance_matrix)
 		return distance_matrix
 	
 	def realscoreP(df,n,m,msa):
@@ -400,38 +401,37 @@ class Calculations:
 		Calculations.score = Calculations.msaIdentity(Calculations.msa)
 		rounded = round(Calculations.score*10)*10 #rounded so every score is in the tens (10,20,30,etc.), easier to compare to matrices
 		print('Rounded similarity score:', rounded)
+		pair=False
 
-		if value == 'Auto-assign BLOSUM based\n on average identity score' or value == 'Auto-assign BLOSUM based\n on pairwise identity score':
-			pair=False
-			if value == 'Auto-assign BLOSUM based\n on pairwise identity score':
+		if value == 'Auto-assign BLOSUM based on average identity score' or value=='Auto-assign BLOSUM based on pairwise identity score':
+			print("1\n")
+			if value == 'Auto-assign BLOSUM based on pairwise identity score':
 				fileNameF=fileName+'Pairwise'
-				print(fileNameF+'Pairwise')
+				print(fileNameF)
 				pair=True
+				print("1\n")
 
 			if rounded <= 30:
 				arr = pd.read_csv('assets/matrices/BLOSUM30.csv', header=None).values
 				mat="BLOSUM30"
-				fileNameF=fileName+mat
-				print(fileNameF)
 				
 
 			elif rounded == 60:
 				arr = pd.read_csv('assets/matrices/BLOSUM62.csv', header=None).values
 				mat="BLOSUM62"
-				fileNameF=fileName+mat
-				print(fileNameF)
 
 			elif rounded >=90:
 				arr = pd.read_csv('assets/matrices/BLOSUM90.csv', header=None).values
 				mat="BLOSUM90"
-				fileNameF=fileName+mat
-				print(fileNameF)
 
 			else:
 				arr = pd.read_csv('assets/matrices/BLOSUM%s.csv'%rounded, header=None).values
 				mat="BLOSUM%s"%rounded
+				print("2\n")
+			if pair==True:
+				fileNameF=fileNameF+mat
+			else:
 				fileNameF=fileName+mat
-				print(fileNameF)
 			
 		else:
 			file = 'assets/matrices/%s.csv'%value
@@ -439,6 +439,7 @@ class Calculations:
 			mat=value
 			fileNameF=fileName+mat
 			print(fileNameF)
+			print("3\n")
 		Calculations.calculate_consensus_tree(arr,gap, n_bootstrap,pair)
 		
 	

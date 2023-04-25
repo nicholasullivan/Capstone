@@ -43,7 +43,7 @@ class Interface:
 
         #drop-down menu for score matrix selection
         matrices = [
-            'Auto-assign BLOSUM based\n on average identity score', 'Auto-assign BLOSUM based\n on pairwise identity score',
+            'Auto-assign BLOSUM based on average identity score', 'Auto-assign BLOSUM based on pairwise identity score',
             'BLOSUM30','BLOSUM40','BLOSUM50','BLOSUM62','BLOSUM70','BLOSUM80','BLOSUM90',
             'PAM10','PAM100','PAM200','PAM300','PAM400','PAM500'
         ]
