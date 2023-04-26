@@ -176,9 +176,12 @@ class Calculations:
 	
 	def dist_mat(df,n_taxa,msa):
 		real = Calculations.realscore(df,n_taxa,msa)
+		print('real',real)
 		rand = Calculations.randscore(df,n_taxa,msa)
+		print('rand',rand)
 		norm_scores = np.subtract(real , rand)
 		identity = Calculations.identityscore(n_taxa,real)
+		print('id',id)
 		upper_norm = np.subtract(identity , rand)
 		raw_dist = -np.log(np.divide(norm_scores, upper_norm))*100
 		#c =  
@@ -192,14 +195,14 @@ class Calculations:
 		counter = 0
 
 		#scoring matrix selection
-		while seq<len(msa):
+		while seq < n_taxa:
 			score=0
 			seq1 = []
 			seq2 = []
-			if counter == len(msa):
+			if counter == n_taxa:
 				seq += 1
-				counter = seq+1
-				if seq==len(msa)-1:
+				counter = 0
+				if seq == n_taxa:
 					break
 
 			msa_1 = msa[seq]
@@ -220,7 +223,7 @@ class Calculations:
 			if sim_score==60:
 				sim_score=62
 			if sim_score>90:
-				sim_score=90 #62?
+				sim_score=90 
 			file = 'assets/matrices/BLOSUM%s.csv'%sim_score
 			scoreMat = pd.read_csv(file, header=None).values
 			# add penalty row and column of -2
@@ -247,11 +250,11 @@ class Calculations:
 			upper_norm = identity-rand
 			raw_dist = -np.log(norm_scores/upper_norm)*100
 			raw_dist=round(raw_dist,1)
-			print(raw_dist)
-
+			print('raw',raw_dist)
 			#add to complete distance matrix
 			distance_matrix[seq][counter]=raw_dist
 			counter += 1
+		
 		print(distance_matrix)
 		return distance_matrix
 	
