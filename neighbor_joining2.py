@@ -129,20 +129,6 @@ class Calculations:
 			return comb_list,seq1,seq2
 		else:
 			return seq1,seq2
-
-
-# walkthrough of all equations to caluclate distance matrix from original Blosum/PAM matrix
-	def dist_mat(df,n_taxa,msa):
-		real = Calculations.realscore(df,n_taxa,msa)
-		rand = Calculations.randscore(df,n_taxa,msa)
-		norm_scores = np.subtract(real , rand)
-		identity = Calculations.identityscore(n_taxa,real)
-		upper_norm = np.subtract(identity , rand)
-		raw_dist = -np.log(np.divide(norm_scores, upper_norm))*100
-		#c =  
-		#distance_matrix = c * raw_dist
-		print("Distance Matrix:\n", raw_dist)
-		return raw_dist
 	
 	#calculates the average identity score for the entire msa 
 	def msaIdentity(msa):
@@ -189,7 +175,7 @@ class Calculations:
 		print("Distance Matrix:\n", raw_dist)
 		return raw_dist
 	
-	def pairwise(msa,n_taxa):
+	def pairwise(msa,n_taxa,gap):
 		distance_matrix = np.zeros((n_taxa, n_taxa))
 		seq = 0
 		counter = 0
@@ -224,18 +210,20 @@ class Calculations:
 				sim_score=62
 			if sim_score>90:
 				sim_score=90 
+			print("sim:",sim_score)
 			file = 'assets/matrices/BLOSUM%s.csv'%sim_score
 			scoreMat = pd.read_csv(file, header=None).values
 			# add penalty row and column of -2
 			with_pen = np.empty([21,21])
 			for i in range(len(scoreMat)):	
-				with_pen[i] = np.append(scoreMat[i], [-2])
-			with_pen[20] = (np.repeat(-2.0, 21))
+				with_pen[i] = np.append(scoreMat[i], [gap])
+			with_pen[20] = (np.repeat(gap, 21))
 
 			# make scoring dataframe
 			labs = 'ARNDCQEGHILKMFPSTWYV-' #missing letters #BZX
 			labels = np.fromstring(labs, dtype = "uint8") 
 			df = pd.DataFrame(with_pen, columns = labels, index = labels)
+			print(df)
 			
 
 			#distance calculation equation
@@ -290,8 +278,7 @@ class Calculations:
 		return rand
 
 	def identityscoreP(df,n,m,msa):
-		seq1=msa[n]
-		seq2=msa[m]
+		seq1,seq2 = Calculations.randComboCalc(msa[n],msa[m],combs=False)
 		score=0
 		for i in seq1:
 			score+=df[i][i]
@@ -459,7 +446,6 @@ class Calculations:
 		labs = 'ARNDCQEGHILKMFPSTWYV-' #missing letters #BZX
 		labels = np.fromstring(labs, dtype = "uint8") 
 		df = pd.DataFrame(with_pen, columns = labels, index = labels)
-		print("Scoring Matrix:\n", df)
 
 		# bootstrapping
 		n_taxa = len(Calculations.taxon_labels)
@@ -472,7 +458,7 @@ class Calculations:
 		if pair==False:
 			dist_mat = Calculations.dist_mat(df, n_taxa, Calculations.msa)
 		else:
-			dist_mat = Calculations.pairwise(Calculations.msa, n_taxa )
+			dist_mat = Calculations.pairwise(Calculations.msa, n_taxa,gap )
 		Calculations.draw_tree(n_taxa, dist_mat)
 
 		for i in range(n_bootstrap-1):
