@@ -1,7 +1,7 @@
 """
-This is a code to calculate the similarities between DNA sequences. It allows the user to input an msa file in
+This is a code to calculate the similarities between protein sequences. It allows the user to input an MSA file in
 phylip (PHY) or fasta (FA) format and choose the scoring matrix they want. The sequences are then compared using
-the choosen scoring matrix, go through a neighbor joining and tree building process, and, finally, results are
+the choosen scoring methodology and go through a neighbor joining and tree building process. The results are then
 confirmed via boostrapping.
 
 Several packages may need to be downloaded on computer based on your current computer packages.
@@ -92,6 +92,12 @@ class Calculations:
 
 		return(sequences, sequence_length, sequence_labels, msa)
 
+		'''
+		KEY:
+		65 - A, 82 - R, 78 - N, 68 - D, 67 - C, 81 - Q, 69 - E, 71 - G, 72 - H, 73 - I, 76 - L, 75 - K, 77 - M,
+		70 - F, 80 - P, 83 - S, 84 - T, 87 - W, 89 - Y, 86 - V, 45 - -
+		'''
+
 	# Find the coordinates of whatever off-diagonal element of a matrix has the lowest value
 	def get_lowest_off_diagonal_value_coordinate(matrix):
 		lowest_value = None
@@ -130,7 +136,7 @@ class Calculations:
 		else:
 			return seq1,seq2
 	
-	#calculates the average identity score for the entire msa 
+	#calculates the average identity score (percentage) for the entire msa 
 	def msaIdentity(msa):
 		seq = 0
 		counter = 1
@@ -148,18 +154,21 @@ class Calculations:
 			msa_1 = msa[seq]
 			msa_2 = msa[counter]
 
+			#double gaps removed and not equated into indentity score
 			gap_ind = [i for i, (g, s) in enumerate(zip(msa_1, msa_2)) if g==s==45]
 			seq1 = list(np.delete(msa_1,gap_ind))
 			seq2 = list(np.delete(msa_2,gap_ind))
+
 			length=len(seq1)
 			for n in range(length):
-				if seq1[n]==seq2[n]:
+				if seq1[n]==seq2[n]: #finds matching residuals and adds one to the score
 					score+=1
 			sim_score=score/length
 			pair_scores.append(sim_score)
 			counter += 1
 		return sum(pair_scores)/len(pair_scores)
 	
+	#calls all scoring methods used in feng+doolittle equation to create distance matrix; used for all scoring methods other than pairwise
 	def dist_mat(df,n_taxa,msa):
 		real = Calculations.realscore(df,n_taxa,msa)
 		print('real',real)
@@ -175,12 +184,14 @@ class Calculations:
 		print("Distance Matrix:\n", raw_dist)
 		return raw_dist
 	
+	#function for pairwise scoring using feng+doolittle; returns distance matrix
 	def pairwise(msa,n_taxa,gap):
 		distance_matrix = np.zeros((n_taxa, n_taxa))
 		seq = 0
 		counter = 0
 
-		#scoring matrix selection
+		#scoring matrix selection within scoring calculation since every pair uses own matrix; doesn't "matrix_selection()" like other scoring methods
+		#scoring matrix selection is done in same manner as "msaIdentity()" but "msaIdentity()" processes entire MSA all at once
 		while seq < n_taxa:
 			score=0
 			seq1 = []
@@ -203,7 +214,8 @@ class Calculations:
 					score+=1
 			sim_score=score/length
 			sim_score=round(sim_score,1)*100
-			sim_score=round(sim_score)
+			sim_score=round(sim_score) #round score to match scoring matrix names
+			#adjust score in needed to match specific matrices we have available
 			if sim_score<30:
 				sim_score=30
 			if sim_score==60:
@@ -226,7 +238,7 @@ class Calculations:
 			print(df)
 			
 
-			#distance calculation equation
+			#distance calculation equation:feng+doolittle
 			real=Calculations.realscoreP(df,seq,counter,msa)
 			print('real:',real)
 			rand=Calculations.randscoreP(df,seq,counter,msa)
@@ -239,13 +251,14 @@ class Calculations:
 			raw_dist = -np.log(norm_scores/upper_norm)*100
 			raw_dist=round(raw_dist,1)
 			print('raw',raw_dist)
-			#add to complete distance matrix
+			#add to complete distance matrix; adds one at a time unlike other scoring which does enitre matrix
 			distance_matrix[seq][counter]=raw_dist
 			counter += 1
 		
 		print(distance_matrix)
 		return distance_matrix
 	
+	#real score in feng+doolittle for pairwise scoring
 	def realscoreP(df,n,m,msa):
 		real=0
 		seq1,seq2 = Calculations.randComboCalc(msa[n],msa[m],combs=False)
@@ -253,9 +266,10 @@ class Calculations:
 			res1 = seq1[j]
 			res2 = seq2[j]
 			comp = df[res1][res2] #find in score mat
-			real += comp #that score is spot in new_mat
+			real += comp 
 		return real
 
+	#random score in feng+doolittle for pairwise scoring
 	def randscoreP(df,n,m,msa):
 		rand_score=0
 		seq1 = []
@@ -277,16 +291,19 @@ class Calculations:
 		rand= (rand_score/len(seq1))- ((gap_count1+gap_count2)*2) #that score is spot in new_mat
 		return rand
 
+	#indentity score in feng+doolittle for pairwise scoring
 	def identityscoreP(df,n,m,msa):
 		seq1,seq2 = Calculations.randComboCalc(msa[n],msa[m],combs=False)
 		score=0
+		#compares each residue in each sequence to itself
 		for i in seq1:
 			score+=df[i][i]
 		for i in seq2:
 			score+=df[i][i]
-		identity=score/2
+		identity=score/2 #averages total score of two sequences
 		return identity
 
+	#real score in feng+doolittle
 	def realscore(df,n_taxa,msa):
 		#make distance matrix of zeros
 		matrix_length = n_taxa
@@ -350,15 +367,11 @@ class Calculations:
 		i = 0
 		while i < (n_taxa):
 			for j in range(n_taxa):
-				matrix[i, j] = (scores[i,i] + scores[j,j]) / 2
+				matrix[i, j] = (scores[i,i] + scores[j,j]) / 2 #gets score from real matrix of each sequence compared to itself
 			i += 1
 		return matrix
 
-		'''
-		KEY:
-		65 - A, 82 - R, 78 - N, 68 - D, 67 - C, 81 - Q, 69 - E, 71 - G, 72 - H, 73 - I, 76 - L, 75 - K, 77 - M,
-		70 - F, 80 - P, 83 - S, 84 - T, 87 - W, 89 - Y, 86 - V, 45 - -
-		'''
+		
 
 	# Read in the multiple sequence alignment
 	def file_select():
@@ -387,20 +400,22 @@ class Calculations:
 	def matrix_selection(value, gap,n_bootstrap = 1):
 		global fileName
 		global mat
-		global fileNameF
+		global fileNameF #required if application does multiple calculations without closing app
 		Calculations.score = Calculations.msaIdentity(Calculations.msa)
 		rounded = round(Calculations.score*10)*10 #rounded so every score is in the tens (10,20,30,etc.), easier to compare to matrices
 		print('Rounded similarity score:', rounded)
-		pair=False
+		pair=False #required to determine which scoring technique is later chosen in "calculate_consensus_tree()"
 
+		#auto assign scoring methods are unique cause program must do calculation to determine proper scoring matrix
 		if value == 'Auto-assign BLOSUM based on average identity score' or value=='Auto-assign BLOSUM based on pairwise identity score':
 			print("1\n")
 			if value == 'Auto-assign BLOSUM based on pairwise identity score':
-				fileNameF=fileName+'Pairwise'
+				fileNameF=fileName+'Pairwise' #adds unique 'Pairwise' to file name
 				print(fileNameF)
-				pair=True
+				pair=True #set equal to true so proper scoring method is used
 				print("1\n")
 
+			#not elif because pairwise scoring still needs a selected matrix which is used in bootstrapping
 			if rounded <= 30:
 				arr = pd.read_csv('assets/matrices/BLOSUM30.csv', header=None).values
 				mat="BLOSUM30"
@@ -418,11 +433,14 @@ class Calculations:
 				arr = pd.read_csv('assets/matrices/BLOSUM%s.csv'%rounded, header=None).values
 				mat="BLOSUM%s"%rounded
 				print("2\n")
+
+			#adds matrix used to filename
 			if pair==True:
 				fileNameF=fileNameF+mat
 			else:
 				fileNameF=fileName+mat
-			
+		
+		#if not auto assigned matrix is chosen prior by user
 		else:
 			file = 'assets/matrices/%s.csv'%value
 			arr = pd.read_csv(file, header=None).values
@@ -454,13 +472,15 @@ class Calculations:
 		newick_file = open(fileNameF+"Bootstraps.tre", "w")
 		newick_file.close()
 
-		# first copy with original msa
+		#chose appropriate scoring method
 		if pair==False:
 			dist_mat = Calculations.dist_mat(df, n_taxa, Calculations.msa)
 		else:
 			dist_mat = Calculations.pairwise(Calculations.msa, n_taxa,gap )
+		#first copy with original msa 
 		Calculations.draw_tree(n_taxa, dist_mat)
 
+		
 		for i in range(n_bootstrap-1):
 			#shuffle msa
 			idx = np.random.randint(seq_length, size = seq_length)
@@ -553,5 +573,6 @@ class Calculations:
 		file.close()
 		Calculations.complete()
 
+	#allows for final UI popup when entire calculation is complete
 	def complete():
 		return True

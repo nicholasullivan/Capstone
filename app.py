@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import Tk
 from PIL import Image, ImageTk
-from neighbor_joining2 import Calculations
+from calculator import Calculations
 
 class Interface:
 
@@ -81,6 +81,7 @@ class Interface:
         self.gap_warn.place(x=30,y=490)
         self.n_warn.place(x=30,y=510)
         
+        #pop-ups for missing info
         def check_readiness():
             self.file_warn.config(fg='white')
             self.mat_warn.config(fg='white')
@@ -97,13 +98,14 @@ class Interface:
             if self.n.get()<=0:
                 self.n_warn.config(fg='red')
 
+        #popup confirming the tre generation is complete
         def popup(tf):
             while tf==True:
                 if Calculations.complete()==True:
                     tk.messagebox.showinfo(title="Calculation Complete!", message="Consensus Tree and Summary files created\n in the same file location as MSA")
                 break
 
-        #submit buttons
+        #submit buttons, begins calculation process in calculator, uses info input by user in app
         self.check = tk.Button(self.frame, text='Check', font= ("lucida", 16), padx=6, pady=2, command=lambda:check_readiness())
         self.run = tk.Button(self.frame, text="Run", font= ("lucida", 16), padx=10, pady=2,
                                 command=lambda:[Calculations.matrix_selection(self.mat.get(), self.gap.get(),self.n.get()),popup(True)], state = 'disabled')
