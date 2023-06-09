@@ -8,6 +8,16 @@ Several packages may need to be downloaded on computer based on your current com
 One of these is the Bio package.
 Download directions at: https://biopython.org/wiki/Download
 
+Mandatory improvements:
+-Reduce runtime
+-Fix Bootstrapping
+
+Recommended improvements: 
+-User entered file names
+-Add more info to summary file
+-Make input errors pop-ups
+-Add more scoring matrices and gap penalty options
+
 Authors- Troy Hofstrand, Nicholas Sullivan, and Nikolaus Ryczek
 Emails- troy.hofstrand@slu.edu, nicholas.sullivan@slu.edu, nikolaus.ryczek@slu.edu
 
