@@ -11,17 +11,20 @@ Download directions at: https://biopython.org/wiki/Download
 Mandatory improvements:
 -Reduce runtime
 -Fix Bootstrapping
+-Thorough documented testing
 
 Recommended improvements: 
 -User entered file names
 -Add more info to summary file
 -Make input errors pop-ups
+-Add a progress bar so the user knows how long the calculation will take
 -Add more scoring matrices and gap penalty options
+-Fix rounding around BLOSUM 62 (currently rounds according to a similarity score of 60 not 62)
 
 Authors- Troy Hofstrand, Nicholas Sullivan, and Nikolaus Ryczek
 Emails- troy.hofstrand@slu.edu, nicholas.sullivan@slu.edu, nikolaus.ryczek@slu.edu
 
-Last Date Updated- 4/24/2023
+Last Date Updated- 6/25/2023
 """
 
 import os
@@ -430,7 +433,6 @@ class Calculations:
 				arr = pd.read_csv('assets/matrices/BLOSUM30.csv', header=None).values
 				mat="BLOSUM30"
 				
-
 			elif rounded == 60:
 				arr = pd.read_csv('assets/matrices/BLOSUM62.csv', header=None).values
 				mat="BLOSUM62"
@@ -482,7 +484,7 @@ class Calculations:
 		newick_file = open(fileNameF+"Bootstraps.tre", "w")
 		newick_file.close()
 
-		#chose appropriate scoring method
+		#choose appropriate scoring method
 		if pair==False:
 			dist_mat = Calculations.dist_mat(df, n_taxa, Calculations.msa)
 		else:
@@ -490,17 +492,17 @@ class Calculations:
 		#first copy with original msa 
 		Calculations.draw_tree(n_taxa, dist_mat)
 
-		
+		#for n bootstraps develop a new msa by shuffling all columns and recalculating the distance matrix
 		for i in range(n_bootstrap-1):
 			#shuffle msa
-			idx = np.random.randint(seq_length, size = seq_length)
-			msa_new = cols[idx,:].T
+			idx = np.random.randint(seq_length, size = seq_length) #random selection of column indices with replacement
+			msa_new = cols[idx,:].T #recreating the shuffled msa
 			#calculate new distance matrix
 			dist_mat = Calculations.dist_mat(df, n_taxa, msa_new)
-			Calculations.draw_tree(n_taxa, dist_mat)
+			Calculations.draw_tree(n_taxa, dist_mat) #each tree is saved in 'Bootstraps.tre' file
 		
 		trees = list(Phylo.parse(fileNameF+"Bootstraps.tre", "newick"))
-		majority_tree = majority_consensus(trees)
+		majority_tree = majority_consensus(trees) #Biopythons majority consensus calculator to create one majority tree
 		Phylo.write(majority_tree, fileNameF+"Consensus.tre", "newick")
 
 		#get total distance of consensus tree and write it to summary file
@@ -511,7 +513,7 @@ class Calculations:
 		file.writelines(["Total consensus tree length: ", str(total_dist), "\n"])
 		file.close()
 
-	# create the tree from the distance matrix and msa
+	# Neighbor-joining algorthm to create the tree from the distance matrix and msa 
 	def draw_tree(n_taxa, distance_matrix):
 		global fileNameF
 		matrix_length = n_taxa
